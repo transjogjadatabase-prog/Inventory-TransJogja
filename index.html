@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ATK POOL PUROSANI — Sistem Inventory Kantor & Halte</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -212,9 +215,102 @@ tr:hover td{background:#fafaf7}
 
 /* ===== PULSE ===== */
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+
+/* ===== LOGIN PAGE ===== */
+.login-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1.5rem}
+.login-card{background:#fff;border:1px solid var(--border);border-radius:20px;padding:2.5rem 2.2rem;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.1)}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;letter-spacing:2px;text-align:center;margin-bottom:4px;color:var(--black)}
+.login-sub{font-size:11px;text-align:center;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2rem}
+.login-divider{height:1px;background:var(--border);margin:1.5rem 0}
+.login-label{font-size:10px;text-transform:uppercase;letter-spacing:0.8px;font-weight:500;color:var(--muted);display:block;margin-bottom:5px}
+.login-input{width:100%;padding:10px 13px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);background:#fff;outline:none;transition:border-color 0.2s;margin-bottom:14px}
+.login-input:focus{border-color:var(--gold)}
+.login-btn{width:100%;background:var(--gold);color:#fff;border:none;border-radius:9px;padding:11px;font-size:13px;font-weight:500;cursor:pointer;letter-spacing:0.5px;font-family:inherit;transition:all 0.2s;margin-top:4px}
+.login-btn:hover{background:var(--gold2);transform:translateY(-1px)}
+.login-err{color:var(--red);font-size:11.5px;text-align:center;margin-top:8px;display:none}
+.login-footer{font-size:10px;color:var(--muted);text-align:center;margin-top:1.5rem;line-height:1.5}
+.app-shell{display:none}
+.app-shell.visible{display:block}
+
+/* ===== PERMINTAAN PAGE ===== */
+.req-wrap{padding:1.8rem 2.5rem}
+.req-form-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.5rem;margin-bottom:1.5rem}
+.req-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;margin-bottom:1.2rem;color:var(--black)}
+.req-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}
+.req-table{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.status-badge{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600}
+.status-badge.pending{background:#fef3c7;color:#92400e}
+.status-badge.approved{background:var(--greenbg);color:var(--green)}
+.status-badge.rejected{background:var(--redbg);color:var(--red)}
+
+/* ===== USER MANAGEMENT PAGE ===== */
+.user-wrap{padding:1.8rem 2.5rem}
+.user-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-top:1.2rem}
+.user-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.4rem;text-align:center;transition:all 0.2s}
+.user-card:hover{border-color:var(--gold);box-shadow:0 6px 20px rgba(0,0,0,0.07)}
+.user-avatar{width:58px;height:58px;border-radius:50%;background:var(--goldbg);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 10px}
+.user-name{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;margin-bottom:2px}
+.user-role{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px}
+.role-badge{padding:4px 12px;border-radius:20px;font-size:10px;font-weight:600;display:inline-block}
+.role-badge.admin{background:#dbeafe;color:#1d4ed8}
+.role-badge.staff{background:var(--greenbg);color:var(--green)}
+.role-badge.viewer{background:#f3f4f6;color:#6b7280}
+
+/* ===== EXPORT BUTTONS ===== */
+.export-bar{display:flex;gap:8px;margin-bottom:1.2rem;flex-wrap:wrap;align-items:center}
+.exp-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;font-size:11.5px;font-weight:500;cursor:pointer;letter-spacing:0.3px;font-family:inherit;border:1px solid;transition:all 0.2s}
+.exp-btn:hover{transform:translateY(-1px)}
+.exp-btn.excel{background:#d1fae5;color:#065f46;border-color:#6ee7b7}
+.exp-btn.excel:hover{background:#a7f3d0}
+.exp-btn.pdf{background:#fee2e2;color:#991b1b;border-color:#fca5a5}
+.exp-btn.pdf:hover{background:#fecaca}
+.exp-btn.print{background:#ede9fe;color:#5b21b6;border-color:#c4b5fd}
+.exp-btn.print:hover{background:#ddd6fe}
+
+/* ===== DATE RANGE FILTER ===== */
+.date-filter{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.date-filter label{font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);font-weight:500}
+.date-input{padding:7px 11px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:inherit;color:var(--text);background:#fff;outline:none;transition:border-color 0.2s}
+.date-input:focus{border-color:var(--gold)}
+
+/* ===== REKAP BULANAN ===== */
+.rekap-title{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;margin-bottom:1rem;color:var(--black)}
+.rekap-table{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-top:1.5rem}
+.month-select-wrap{display:flex;gap:8px;align-items:center;margin-bottom:1.5rem}
+
+/* ===== SIDEBAR USER ===== */
+.topnav-user{display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 10px;border-radius:8px;transition:background 0.2s;position:relative}
+.topnav-user:hover{background:var(--bg)}
+.user-dropdown{position:absolute;top:calc(100% + 10px);right:0;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.1);min-width:170px;z-index:300;overflow:hidden;display:none}
+.user-dropdown.open{display:block}
+.ud-item{padding:9px 14px;font-size:12px;cursor:pointer;transition:background 0.15s;display:flex;align-items:center;gap:8px;color:var(--text)}
+.ud-item:hover{background:var(--bg)}
+.ud-item.danger{color:var(--red)}
+.ud-item.danger:hover{background:var(--redbg)}
+.ud-divider{height:1px;background:var(--border)}
+
+@media print{.topnav,.breadcrumb,.catbar,.toolbar,.export-bar,.pagination-wrap,footer,.nav-right,.filter-btn,.sort-right,.rtabs,.lap-filter-row{display:none!important}.main,.laporan-wrap{padding:0!important}table{font-size:11px}}
 </style>
 </head>
 <body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">ATK<br>POOL PUROSANI</div>
+    <div class="login-sub">Sistem Inventory Kantor & Halte</div>
+    <div class="login-divider"></div>
+    <label class="login-label">Username</label>
+    <input class="login-input" id="l-user" type="text" placeholder="Masukkan username..." autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
+    <label class="login-label">Password</label>
+    <input class="login-input" id="l-pass" type="password" placeholder="Masukkan password..." autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">🔐 MASUK</button>
+    <div class="login-err" id="login-err">Username atau password salah.</div>
+    <div class="login-footer">Demo: admin / admin123 &nbsp;|&nbsp; staff / staff123<br>© 2026 ATK Pool Purosani</div>
+  </div>
+</div>
+
+<div class="app-shell" id="app-shell">
 
 <!-- TOP NAV -->
 <nav class="topnav">
@@ -224,11 +320,23 @@ tr:hover td{background:#fafaf7}
     <li><a href="#" id="nav-laporan" onclick="gotoPage('laporan');return false">LAPORAN</a></li>
     <li><a href="#" id="nav-riwayat" onclick="gotoPage('riwayat');return false">RIWAYAT</a></li>
     <li><a href="#" id="nav-tambah" onclick="openAddModal();return false">TAMBAH BARANG</a></li>
+    <li><a href="#" id="nav-permintaan" onclick="gotoPage('permintaan');return false">PERMINTAAN</a></li>
+    <li><a href="#" id="nav-users" onclick="gotoPage('users');return false">PENGGUNA</a></li>
   </ul>
   <div class="nav-right">
     <div class="nav-icon-btn" title="Pencarian" onclick="focusSearch()">🔍</div>
-    <div class="nav-icon-btn" title="Profil">👤</div>
     <button class="notif-btn" onclick="gotoPage('laporan')">📊 LAPORAN <span class="notif-badge" id="low-count">0</span></button>
+    <div class="topnav-user" onclick="toggleUserDropdown()" id="user-btn">
+      <span style="font-size:13px">👤</span>
+      <span style="font-size:12px;font-weight:500" id="nav-username">—</span>
+      <span style="font-size:10px;color:var(--muted)">▾</span>
+      <div class="user-dropdown" id="user-dropdown">
+        <div class="ud-item">👤 Profil Saya</div>
+        <div class="ud-item">🔑 Ganti Password</div>
+        <div class="ud-divider"></div>
+        <div class="ud-item danger" onclick="doLogout()">🚪 Keluar</div>
+      </div>
+    </div>
   </div>
 </nav>
 
@@ -275,12 +383,35 @@ tr:hover td{background:#fafaf7}
       <div class="lap-card keluar"><div class="lap-num" id="r-keluar">0</div><div class="lap-lbl">Total Keluar</div></div>
       <div class="lap-card sisa"><div class="lap-num" id="r-sisa">0</div><div class="lap-lbl">Sisa Stok</div></div>
     </div>
+
+    <!-- Filter -->
     <div class="lap-filter-row">
       <select class="lap-select" id="f-lokasi" onchange="renderLaporan()"><option value="">Semua Lokasi</option><option>Kantor</option><option>Halte</option></select>
       <select class="lap-select" id="f-kategori" onchange="renderLaporan()"><option value="">Semua Kategori</option></select>
       <select class="lap-select" id="f-status" onchange="renderLaporan()"><option value="">Semua Status</option><option value="ok">Stok Aman</option><option value="low">Stok Menipis</option><option value="out">Stok Habis</option></select>
     </div>
+
+    <!-- Export Buttons -->
+    <div class="export-bar">
+      <span style="font-size:11px;color:var(--muted);font-weight:500;letter-spacing:0.5px">EXPORT:</span>
+      <button class="exp-btn excel" onclick="exportExcel()">📊 Excel (.xlsx)</button>
+      <button class="exp-btn pdf" onclick="exportPDF()">📄 PDF Berkop Surat</button>
+      <button class="exp-btn print" onclick="window.print()">🖨️ Cetak</button>
+    </div>
+
     <div class="table-wrap" id="tbl-laporan"></div>
+
+    <!-- Rekap Bulanan -->
+    <div class="rekap-table">
+      <div style="padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div class="rekap-title" style="margin-bottom:0">📅 Rekap Bulanan</div>
+        <div class="month-select-wrap" style="margin-bottom:0">
+          <select class="lap-select" id="rekap-tahun" onchange="renderRekap()"></select>
+          <select class="lap-select" id="rekap-lokasi" onchange="renderRekap()"><option value="">Semua Lokasi</option><option>Kantor</option><option>Halte</option></select>
+        </div>
+      </div>
+      <div id="tbl-rekap"></div>
+    </div>
   </div>
 </div>
 
@@ -295,8 +426,55 @@ tr:hover td{background:#fafaf7}
     <div class="lap-filter-row">
       <select class="lap-select" id="rh-lokasi" onchange="renderRiwayat()"><option value="">Semua Lokasi</option><option>Kantor</option><option>Halte</option></select>
       <input class="search-mini" type="text" placeholder="Cari nama barang..." oninput="rhSearch=this.value;renderRiwayat()" style="width:200px">
+      <div class="date-filter">
+        <label>Dari</label>
+        <input class="date-input" type="date" id="rh-dari" onchange="renderRiwayat()">
+        <label>s/d</label>
+        <input class="date-input" type="date" id="rh-sampai" onchange="renderRiwayat()">
+        <button class="filter-btn" onclick="resetDateFilter()" style="padding:6px 12px;font-size:11px">Reset</button>
+      </div>
+    </div>
+    <div class="export-bar">
+      <span style="font-size:11px;color:var(--muted);font-weight:500;letter-spacing:0.5px">EXPORT:</span>
+      <button class="exp-btn excel" onclick="exportRiwayatExcel()">📊 Excel (.xlsx)</button>
+      <button class="exp-btn pdf" onclick="exportRiwayatPDF()">📄 PDF</button>
     </div>
     <div class="table-wrap" id="tbl-riwayat"></div>
+  </div>
+</div>
+
+<!-- ===== PAGE: PERMINTAAN ===== -->
+<div id="page-permintaan" style="display:none">
+  <div class="req-wrap">
+    <div class="req-form-card">
+      <div class="req-title">➕ Buat Permintaan Barang</div>
+      <div class="req-grid">
+        <div class="mf-group"><label class="mf-label">Barang</label>
+          <select class="mf-select" id="req-barang" style="width:100%"></select>
+        </div>
+        <div class="mf-group"><label class="mf-label">Jumlah</label>
+          <input class="mf-input" type="number" id="req-jml" placeholder="0" min="1" style="width:100%">
+        </div>
+        <div class="mf-group"><label class="mf-label">Keperluan / Keterangan</label>
+          <input class="mf-input" id="req-ket" placeholder="Keperluan..." style="width:100%">
+        </div>
+      </div>
+      <button class="mbtn-masuk" style="padding:9px 22px;border-radius:8px" onclick="submitPermintaan()">📋 Kirim Permintaan</button>
+    </div>
+    <div class="req-title" style="font-family:'Cormorant Garamond',serif;font-size:18px;margin-bottom:1rem">Daftar Permintaan</div>
+    <div class="req-table table-wrap" id="tbl-permintaan"></div>
+  </div>
+</div>
+
+<!-- ===== PAGE: USERS ===== -->
+<div id="page-users" style="display:none">
+  <div class="user-wrap">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--black)">Manajemen Pengguna</div>
+      <button class="mbtn-masuk" style="border-radius:8px;padding:8px 18px;font-size:12px" onclick="toast('🔧 Fitur tambah pengguna akan segera hadir','')">+ Tambah Pengguna</button>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:0.5rem">Kelola akses dan peran pengguna sistem</p>
+    <div class="user-grid" id="user-grid"></div>
   </div>
 </div>
 
@@ -388,6 +566,8 @@ tr:hover td{background:#fafaf7}
 </div>
 
 <div class="toast" id="toast"></div>
+
+</div><!-- /app-shell -->
 
 <script>
 // =========== DATA ===========
@@ -616,16 +796,9 @@ function setRtab(val,el){
   renderRiwayat();
 }
 function renderRiwayat(){
-  var lok=document.getElementById('rh-lokasi').value;
-  var list=transaksi.filter(t=>{
-    if(rhTab!=='semua'&&t.tipe!==rhTab)return false;
-    if(lok&&t.lok!==lok)return false;
-    var b=getB(t.bid);
-    if(rhSearch&&b&&!b.nama.toLowerCase().includes(rhSearch.toLowerCase()))return false;
-    return true;
-  }).slice().reverse();
+  var list=getFilteredRiwayat();
   if(!list.length){document.getElementById('tbl-riwayat').innerHTML='<div class="empty"><div class="empty-icon">📋</div><p>Belum ada riwayat transaksi</p></div>';return;}
-  var rows=list.map((t,i)=>{
+  var rows=list.slice().reverse().map((t,i)=>{
     var b=getB(t.bid)||{nama:'?',emoji:'?',sat:''};
     return '<tr><td style="color:var(--muted);font-size:11px">'+(i+1)+'</td>'
       +'<td>'+t.tgl+'</td>'
@@ -642,20 +815,283 @@ function renderRiwayat(){
 var curPage='barang';
 function gotoPage(p){
   curPage=p;
-  ['barang','laporan','riwayat'].forEach(pg=>{
-    document.getElementById('page-'+pg).style.display=pg===p?'block':'none';
+  var allPages=['barang','laporan','riwayat','permintaan','users'];
+  allPages.forEach(pg=>{
+    var el=document.getElementById('page-'+pg);
+    if(el)el.style.display=pg===p?'block':'none';
     var n=document.getElementById('nav-'+pg);
     if(n)n.className=pg===p?'active':'';
   });
-  var bcMap={barang:'Data Barang',laporan:'Laporan',riwayat:'Riwayat Transaksi'};
+  var bcMap={barang:'Data Barang',laporan:'Laporan',riwayat:'Riwayat Transaksi',permintaan:'Permintaan Barang',users:'Manajemen Pengguna'};
   document.getElementById('bc-page').textContent=bcMap[p]||p;
   var catVis=p==='barang';
   document.getElementById('catbar').style.display=catVis?'block':'none';
   document.getElementById('toolbar-el').style.display=catVis?'flex':'none';
-  if(p==='laporan')renderLaporan();
+  if(p==='laporan'){renderLaporan();renderRekap();}
   if(p==='riwayat')renderRiwayat();
+  if(p==='permintaan')renderPermintaan();
+  if(p==='users')renderUsers();
 }
 function toggleFilter(){toast('🔧 Filter panel akan segera tersedia','');}
+
+// =========== LOGIN ===========
+var USERS=[
+  {username:'admin',password:'admin123',nama:'Administrator',role:'admin',avatar:'👨‍💼'},
+  {username:'staff',password:'staff123',nama:'Staff Gudang',role:'staff',avatar:'👷'},
+  {username:'viewer',password:'viewer123',nama:'Viewer',role:'viewer',avatar:'👁️'},
+];
+var currentUser=null;
+function doLogin(){
+  var u=document.getElementById('l-user').value.trim();
+  var p=document.getElementById('l-pass').value;
+  var found=USERS.find(x=>x.username===u&&x.password===p);
+  if(!found){
+    document.getElementById('login-err').style.display='block';
+    return;
+  }
+  currentUser=found;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-shell').classList.add('visible');
+  document.getElementById('nav-username').textContent=found.nama;
+  toast('👋 Selamat datang, '+found.nama+'!','ok');
+}
+function doLogout(){
+  currentUser=null;
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app-shell').classList.remove('visible');
+  document.getElementById('l-user').value='';
+  document.getElementById('l-pass').value='';
+  document.getElementById('login-err').style.display='none';
+}
+function toggleUserDropdown(){
+  document.getElementById('user-dropdown').classList.toggle('open');
+}
+document.addEventListener('click',function(e){
+  var btn=document.getElementById('user-btn');
+  var dd=document.getElementById('user-dropdown');
+  if(dd&&btn&&!btn.contains(e.target))dd.classList.remove('open');
+});
+
+// =========== PERMINTAAN ===========
+var permintaan=[];
+var nextReqId=1;
+function renderPermintaanBarangSelect(){
+  var sel=document.getElementById('req-barang');
+  if(!sel)return;
+  sel.innerHTML=barang.map(b=>'<option value="'+b.id+'">'+b.emoji+' '+b.nama+' ('+b.stok+' '+b.sat+')</option>').join('');
+}
+function submitPermintaan(){
+  var bid=parseInt(document.getElementById('req-barang').value);
+  var jml=parseInt(document.getElementById('req-jml').value)||0;
+  var ket=document.getElementById('req-ket').value.trim();
+  if(!jml){toast('⚠️ Jumlah harus diisi','err');return}
+  var b=getB(bid);
+  permintaan.push({id:nextReqId++,bid:bid,jml:jml,ket:ket||'-',tgl:todayStr(),status:'pending',user:currentUser?currentUser.nama:'Staff'});
+  document.getElementById('req-jml').value='';
+  document.getElementById('req-ket').value='';
+  renderPermintaan();
+  toast('✅ Permintaan "'+b.nama+'" berhasil dikirim','ok');
+}
+function setPermintaanStatus(id,status){
+  var p=permintaan.find(x=>x.id===id);
+  if(p){
+    if(status==='approved'){
+      var b=getB(p.bid);
+      if(b){b.stok+=p.jml;transaksi.push({id:nextTrxId++,bid:b.id,tipe:'masuk',jml:p.jml,tgl:todayStr(),ket:'Dari permintaan #'+id,lok:b.lokasi});}
+    }
+    p.status=status;
+    renderPermintaan();renderGrid();buildCatbar();
+    toast(status==='approved'?'✅ Permintaan disetujui & stok bertambah':'❌ Permintaan ditolak','ok');
+  }
+}
+function renderPermintaan(){
+  renderPermintaanBarangSelect();
+  var tbl=document.getElementById('tbl-permintaan');
+  if(!tbl)return;
+  if(!permintaan.length){tbl.innerHTML='<div class="empty"><div class="empty-icon">📋</div><p>Belum ada permintaan barang</p></div>';return;}
+  var rows=permintaan.slice().reverse().map(p=>{
+    var b=getB(p.bid)||{nama:'?',emoji:'?',sat:''};
+    var stLabel={'pending':'Menunggu','approved':'Disetujui','rejected':'Ditolak'};
+    var actions=p.status==='pending'?
+      '<button onclick="setPermintaanStatus('+p.id+',\'approved\')" style="padding:4px 10px;background:var(--green);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;margin-right:4px">✓ Setuju</button>'+
+      '<button onclick="setPermintaanStatus('+p.id+',\'rejected\')" style="padding:4px 10px;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px">✗ Tolak</button>':
+      '—';
+    return '<tr><td>'+b.emoji+' '+b.nama+'</td><td style="font-weight:600">'+p.jml+' '+b.sat+'</td><td>'+p.ket+'</td><td>'+p.tgl+'</td><td>'+p.user+'</td>'
+      +'<td><span class="status-badge '+p.status+'">'+stLabel[p.status]+'</span></td>'
+      +'<td>'+actions+'</td></tr>';
+  }).join('');
+  tbl.innerHTML='<table><thead><tr><th>Barang</th><th>Jumlah</th><th>Keterangan</th><th>Tanggal</th><th>Pemohon</th><th>Status</th><th>Aksi</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+// =========== USERS ===========
+function renderUsers(){
+  var grid=document.getElementById('user-grid');
+  if(!grid)return;
+  var roleLabel={admin:'Admin',staff:'Staff',viewer:'Viewer'};
+  grid.innerHTML=USERS.map(u=>'<div class="user-card">'
+    +'<div class="user-avatar">'+u.avatar+'</div>'
+    +'<div class="user-name">'+u.nama+'</div>'
+    +'<div class="user-role">@'+u.username+'</div>'
+    +'<span class="role-badge '+u.role+'">'+roleLabel[u.role]+'</span>'
+    +'</div>').join('');
+}
+
+// =========== REKAP BULANAN ===========
+function initRekapTahun(){
+  var sel=document.getElementById('rekap-tahun');
+  if(!sel)return;
+  var years=[...new Set(transaksi.map(t=>t.tgl.slice(0,4)))].sort().reverse();
+  if(!years.length)years=[new Date().getFullYear().toString()];
+  sel.innerHTML=years.map(y=>'<option value="'+y+'">'+y+'</option>').join('');
+}
+var BULAN_NAMES=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+function renderRekap(){
+  var tbl=document.getElementById('tbl-rekap');
+  if(!tbl)return;
+  var tahun=document.getElementById('rekap-tahun')?document.getElementById('rekap-tahun').value:'';
+  var lok=document.getElementById('rekap-lokasi')?document.getElementById('rekap-lokasi').value:'';
+  var data=Array.from({length:12},(_,mi)=>{
+    var bulanStr=tahun+'-'+String(mi+1).padStart(2,'0');
+    var trxBulan=transaksi.filter(t=>t.tgl.startsWith(bulanStr)&&(!lok||t.lok===lok));
+    var masuk=trxBulan.filter(t=>t.tipe==='masuk').reduce((a,t)=>a+t.jml,0);
+    var keluar=trxBulan.filter(t=>t.tipe==='keluar').reduce((a,t)=>a+t.jml,0);
+    return {bulan:BULAN_NAMES[mi],masuk,keluar,trx:trxBulan.length};
+  });
+  var rows=data.map(d=>'<tr><td><b>'+d.bulan+'</b></td>'
+    +'<td style="color:var(--green);font-weight:600">'+d.masuk+'</td>'
+    +'<td style="color:var(--red);font-weight:600">'+d.keluar+'</td>'
+    +'<td>'+d.trx+' transaksi</td></tr>').join('');
+  var tM=data.reduce((a,d)=>a+d.masuk,0),tK=data.reduce((a,d)=>a+d.keluar,0);
+  tbl.innerHTML='<table><thead><tr><th>Bulan</th><th>Total Masuk</th><th>Total Keluar</th><th>Transaksi</th></tr></thead><tbody>'
+    +rows+'<tr style="background:var(--light)"><td style="font-weight:600">TOTAL '+tahun+'</td><td style="color:var(--green);font-weight:700">'+tM+'</td><td style="color:var(--red);font-weight:700">'+tK+'</td><td>'+data.reduce((a,d)=>a+d.trx,0)+' transaksi</td></tr></tbody></table>';
+}
+
+// =========== EXPORT EXCEL LAPORAN ===========
+function exportExcel(){
+  var lok=document.getElementById('f-lokasi').value;
+  var kat=document.getElementById('f-kategori').value;
+  var sts=document.getElementById('f-status').value;
+  var list=barang.filter(b=>(!lok||b.lokasi===lok)&&(!kat||b.kat===kat)&&(!sts||stockStatus(b)===sts));
+  var wsData=[['No','Nama Barang','Lokasi','Kategori','Total Masuk','Total Keluar','Stok Saat Ini','Satuan','Status']];
+  list.forEach((b,i)=>{
+    var trxB=transaksi.filter(t=>t.bid===b.id);
+    var m=trxB.filter(t=>t.tipe==='masuk').reduce((a,t)=>a+t.jml,0);
+    var k=trxB.filter(t=>t.tipe==='keluar').reduce((a,t)=>a+t.jml,0);
+    wsData.push([i+1,b.nama,b.lokasi,b.kat,m,k,b.stok,b.sat,statusLabel(stockStatus(b))]);
+  });
+  var wb=XLSX.utils.book_new();
+  var ws=XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols']=[{wch:5},{wch:25},{wch:12},{wch:15},{wch:12},{wch:12},{wch:14},{wch:10},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws,'Laporan Stok');
+  // Rekap bulanan sheet
+  var tahun=new Date().getFullYear().toString();
+  var rekapData=[['Bulan','Total Masuk','Total Keluar','Jumlah Transaksi']];
+  Array.from({length:12},(_,mi)=>{
+    var bulanStr=tahun+'-'+String(mi+1).padStart(2,'0');
+    var trxBulan=transaksi.filter(t=>t.tgl.startsWith(bulanStr));
+    var masuk=trxBulan.filter(t=>t.tipe==='masuk').reduce((a,t)=>a+t.jml,0);
+    var keluar=trxBulan.filter(t=>t.tipe==='keluar').reduce((a,t)=>a+t.jml,0);
+    rekapData.push([BULAN_NAMES[mi]+' '+tahun,masuk,keluar,trxBulan.length]);
+  });
+  var ws2=XLSX.utils.aoa_to_sheet(rekapData);
+  XLSX.utils.book_append_sheet(wb,ws2,'Rekap Bulanan');
+  XLSX.writeFile(wb,'Laporan_ATK_Pool_Purosani_'+todayStr()+'.xlsx');
+  toast('✅ File Excel berhasil diunduh','ok');
+}
+
+// =========== EXPORT PDF LAPORAN ===========
+function exportPDF(){
+  var {jsPDF}=window.jspdf;
+  var doc=new jsPDF('l','mm','a4');
+  var pw=doc.internal.pageSize.getWidth();
+  // Header
+  doc.setFillColor(200,150,10);
+  doc.rect(0,0,pw,22,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(16);doc.setFont('helvetica','bold');
+  doc.text('ATK POOL PUROSANI',14,10);
+  doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.text('Sistem Inventory Kantor & Halte — Laporan Stok',14,16);
+  doc.text('Dicetak: '+todayStr(),pw-14,16,{align:'right'});
+  doc.text('Perengkembang, Balecatur, Kec. Gamping, Kab. Sleman, DIY 55295',pw-14,10,{align:'right'});
+  doc.setTextColor(30,30,28);
+  // Summary
+  var tM=parseInt(document.getElementById('r-masuk').textContent)||0;
+  var tK=parseInt(document.getElementById('r-keluar').textContent)||0;
+  var tS=parseInt(document.getElementById('r-sisa').textContent)||0;
+  doc.setFontSize(10);doc.setFont('helvetica','bold');
+  doc.text('Total Masuk: '+tM,14,30);doc.text('Total Keluar: '+tK,80,30);doc.text('Sisa Stok: '+tS,150,30);
+  // Table
+  var lok=document.getElementById('f-lokasi').value;
+  var kat=document.getElementById('f-kategori').value;
+  var sts=document.getElementById('f-status').value;
+  var list=barang.filter(b=>(!lok||b.lokasi===lok)&&(!kat||b.kat===kat)&&(!sts||stockStatus(b)===sts));
+  var body=list.map((b,i)=>{
+    var trxB=transaksi.filter(t=>t.bid===b.id);
+    var m=trxB.filter(t=>t.tipe==='masuk').reduce((a,t)=>a+t.jml,0);
+    var k=trxB.filter(t=>t.tipe==='keluar').reduce((a,t)=>a+t.jml,0);
+    return [i+1,b.nama,b.lokasi,b.kat,m,k,b.stok+' '+b.sat,statusLabel(stockStatus(b))];
+  });
+  doc.autoTable({head:[['#','Nama Barang','Lokasi','Kategori','Masuk','Keluar','Stok','Status']],body:body,startY:35,styles:{fontSize:9},headStyles:{fillColor:[200,150,10],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[253,246,227]},margin:{left:14,right:14}});
+  doc.save('Laporan_ATK_Pool_Purosani_'+todayStr()+'.pdf');
+  toast('✅ File PDF berhasil diunduh','ok');
+}
+
+// =========== EXPORT EXCEL RIWAYAT ===========
+function exportRiwayatExcel(){
+  var list=getFilteredRiwayat();
+  var wsData=[['No','Tanggal','Nama Barang','Lokasi','Tipe','Jumlah','Keterangan']];
+  list.slice().reverse().forEach((t,i)=>{
+    var b=getB(t.bid)||{nama:'?',sat:''};
+    wsData.push([i+1,t.tgl,b.nama,t.lok,t.tipe==='masuk'?'Masuk':'Keluar',t.jml,t.ket]);
+  });
+  var wb=XLSX.utils.book_new();
+  var ws=XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols']=[{wch:5},{wch:12},{wch:25},{wch:12},{wch:10},{wch:10},{wch:25}];
+  XLSX.utils.book_append_sheet(wb,ws,'Riwayat Transaksi');
+  XLSX.writeFile(wb,'Riwayat_ATK_Pool_Purosani_'+todayStr()+'.xlsx');
+  toast('✅ Riwayat Excel berhasil diunduh','ok');
+}
+
+// =========== EXPORT PDF RIWAYAT ===========
+function exportRiwayatPDF(){
+  var {jsPDF}=window.jspdf;
+  var doc=new jsPDF('l','mm','a4');
+  var pw=doc.internal.pageSize.getWidth();
+  doc.setFillColor(200,150,10);
+  doc.rect(0,0,pw,22,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(16);doc.setFont('helvetica','bold');
+  doc.text('ATK POOL PUROSANI',14,10);
+  doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.text('Riwayat Transaksi — Dicetak: '+todayStr(),14,16);
+  doc.setTextColor(30,30,28);
+  var list=getFilteredRiwayat().slice().reverse();
+  var body=list.map((t,i)=>{var b=getB(t.bid)||{nama:'?',sat:''};return[i+1,t.tgl,b.nama,t.lok,t.tipe==='masuk'?'Masuk':'Keluar',t.jml,t.ket];});
+  doc.autoTable({head:[['#','Tanggal','Barang','Lokasi','Tipe','Jumlah','Keterangan']],body:body,startY:28,styles:{fontSize:9},headStyles:{fillColor:[200,150,10],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[253,246,227]},margin:{left:14,right:14}});
+  doc.save('Riwayat_ATK_Pool_Purosani_'+todayStr()+'.pdf');
+  toast('✅ Riwayat PDF berhasil diunduh','ok');
+}
+
+function getFilteredRiwayat(){
+  var lok=document.getElementById('rh-lokasi').value;
+  var dari=document.getElementById('rh-dari').value;
+  var sampai=document.getElementById('rh-sampai').value;
+  return transaksi.filter(t=>{
+    if(rhTab!=='semua'&&t.tipe!==rhTab)return false;
+    if(lok&&t.lok!==lok)return false;
+    if(dari&&t.tgl<dari)return false;
+    if(sampai&&t.tgl>sampai)return false;
+    var b=getB(t.bid);
+    if(rhSearch&&b&&!b.nama.toLowerCase().includes(rhSearch.toLowerCase()))return false;
+    return true;
+  });
+}
+function resetDateFilter(){
+  document.getElementById('rh-dari').value='';
+  document.getElementById('rh-sampai').value='';
+  renderRiwayat();
+}
 
 // =========== UTILS ===========
 function closeModal(id){document.getElementById(id).classList.remove('open')}
@@ -670,6 +1106,7 @@ buildCatbar();
 renderGrid();
 updateLowCount();
 document.getElementById('mf-tanggal').value=todayStr();
+initRekapTahun();
 </script>
 </body>
 </html>
