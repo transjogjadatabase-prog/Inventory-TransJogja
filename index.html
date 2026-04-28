@@ -8,6 +8,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -146,6 +148,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .pcard-img{height:128px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
 .pcard-img.lokasi-kantor{background:linear-gradient(145deg,#ddeaff,#bcd3ff)}
 .pcard-img.lokasi-halte{background:linear-gradient(145deg,#fff3d0,#ffe59a)}
+.pcard-emoji{font-size:52px;line-height:1;display:block}
+.pcard-weight{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.92);border-radius:20px;padding:3px 9px;font-size:9.5px;color:var(--text2);font-weight:600;backdrop-filter:blur(4px)}
+.pcard-img-wrap{position:relative;height:128px;overflow:hidden}
 .ios-icon{width:70px;height:70px;border-radius:17px;display:flex;align-items:center;justify-content:center;font-size:34px;box-shadow:0 6px 18px rgba(0,0,0,.18);transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
 .pcard:hover .ios-icon{transform:scale(1.1) rotate(-3deg)}
 .pcard-sat-badge{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.92);border-radius:20px;padding:3px 9px;font-size:9.5px;color:var(--text2);font-weight:600;backdrop-filter:blur(4px)}
@@ -376,6 +381,71 @@ footer{background:var(--navy3);border-top:1px solid rgba(255,255,255,.08);paddin
 .pemohon-qbtn{padding:4px 10px;border:1.5px solid var(--border);border-radius:100px;font-size:10.5px;font-weight:600;cursor:pointer;background:#fff;color:var(--text2);transition:all .15s;font-family:inherit}
 .pemohon-qbtn:hover{border-color:var(--navy);background:var(--navy-light);color:var(--navy)}
 
+/* ====== CHART SECTION ====== */
+.chart-section{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:1.5rem;box-shadow:var(--shadow-sm)}
+.chart-head{background:linear-gradient(90deg,var(--navy3),var(--navy));padding:13px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.chart-head-title{font-size:13px;font-weight:700;color:#fff}
+.chart-tabs{display:flex;gap:4px}
+.chart-tab{padding:4px 12px;border-radius:100px;font-size:10.5px;font-weight:700;cursor:pointer;border:1.5px solid rgba(255,255,255,.3);background:transparent;color:rgba(255,255,255,.7);transition:all .2s;font-family:inherit}
+.chart-tab.active{background:#fff;color:var(--navy);border-color:#fff}
+.chart-body{padding:1.2rem 1.4rem}
+.chart-canvas-wrap{position:relative;height:260px}
+
+/* ====== BARCODE MODAL ====== */
+.barcode-modal{max-width:420px}
+#barcode-video-wrap{position:relative;width:100%;aspect-ratio:4/3;background:#000;border-radius:12px;overflow:hidden;margin-bottom:1rem}
+#barcode-video-wrap video{width:100%;height:100%;object-fit:cover}
+.barcode-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.barcode-frame{width:72%;aspect-ratio:3/1;border:3px solid var(--gold);border-radius:8px;box-shadow:0 0 0 2000px rgba(0,0,0,.45)}
+.barcode-scan-line{position:absolute;width:66%;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:scanLine 2s ease-in-out infinite}
+@keyframes scanLine{0%{top:20%}100%{top:75%}}
+.barcode-result-box{background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;font-size:12.5px;color:var(--text2);margin-bottom:10px;min-height:36px;font-weight:500}
+.barcode-result-box.found{border-color:var(--green);background:var(--green-bg);color:var(--green)}
+.barcode-manual-row{display:flex;gap:6px;margin-bottom:8px}
+
+/* ====== PHOTO FEATURE ====== */
+.pcard-img-wrap{position:relative}
+.pcard-photo{width:100%;height:128px;object-fit:cover;display:block}
+.photo-upload-btn{position:absolute;bottom:8px;right:8px;background:rgba(255,255,255,.9);border:none;border-radius:7px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer;color:var(--navy);display:flex;align-items:center;gap:4px;transition:all .15s;backdrop-filter:blur(4px)}
+.photo-upload-btn:hover{background:#fff;box-shadow:var(--shadow-sm)}
+.modal-photo-section{margin-bottom:12px}
+.modal-photo-preview{width:100%;height:150px;object-fit:cover;border-radius:10px;margin-bottom:6px;display:none}
+.modal-photo-placeholder{width:100%;height:100px;background:var(--bg);border:2px dashed var(--border2);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer;transition:all .2s;margin-bottom:6px}
+.modal-photo-placeholder:hover{border-color:var(--navy);color:var(--navy);background:var(--navy-light)}
+.photo-action-row{display:flex;gap:6px}
+.photo-btn{flex:1;padding:6px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid;transition:all .15s}
+.photo-btn.upload{background:var(--navy-light);color:var(--navy);border-color:var(--navy-soft)}
+.photo-btn.upload:hover{background:var(--navy);color:#fff}
+.photo-btn.delete{background:var(--red-bg);color:var(--red);border-color:#FFCDD2}
+.photo-btn.delete:hover{background:var(--red);color:#fff}
+
+/* ====== NOTIF PANEL ====== */
+.notif-panel{position:fixed;top:70px;right:1.5rem;width:340px;background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-lg);z-index:400;display:none;overflow:hidden;animation:fadeDown .2s ease}
+.notif-panel.open{display:block}
+.notif-panel-head{background:linear-gradient(135deg,var(--navy),var(--navy2));padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.notif-panel-title{font-size:13px;font-weight:700;color:#fff}
+.notif-panel-close{background:rgba(255,255,255,.15);border:none;border-radius:6px;width:24px;height:24px;cursor:pointer;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.notif-panel-close:hover{background:rgba(255,255,255,.3)}
+.notif-list{max-height:340px;overflow-y:auto}
+.notif-item{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);transition:background .15s;cursor:pointer}
+.notif-item:hover{background:var(--bg)}
+.notif-item:last-child{border-bottom:none}
+.notif-dot{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.notif-dot.low{background:var(--amber-bg)}
+.notif-dot.out{background:var(--red-bg)}
+.notif-info{flex:1}
+.notif-name{font-size:12.5px;font-weight:700;color:var(--text);line-height:1.3}
+.notif-desc{font-size:11px;color:var(--muted);margin-top:1px}
+.notif-empty{padding:2rem;text-align:center;color:var(--muted);font-size:12.5px}
+.notif-footer{padding:10px 14px;border-top:1px solid var(--border);background:var(--bg)}
+.notif-wa-btn{width:100%;padding:8px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s}
+.notif-wa-btn:hover{opacity:.9;transform:translateY(-1px)}
+.notif-wa-btn.email{background:linear-gradient(135deg,var(--navy),var(--navy2));margin-top:6px}
+
+/* ====== SAVE INDICATOR ====== */
+.save-indicator{position:fixed;bottom:24px;left:24px;background:var(--green);color:#fff;padding:8px 14px;border-radius:8px;font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:6px;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;z-index:999}
+.save-indicator.show{opacity:1;transform:translateY(0)}
+
 /* ====== GENERAL ENHANCEMENTS ====== */
 .table-card{background:var(--white);border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:1.5rem;box-shadow:var(--shadow-sm)}
 .filter-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:1rem;padding:11px 14px;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-sm)}
@@ -442,6 +512,19 @@ tr:hover td{background:#F5F7FC}
 
 <div class="app-shell" id="app-shell">
 
+<div class="notif-panel" id="notif-panel">
+  <div class="notif-panel-head">
+    <span class="notif-panel-title">🔔 Notifikasi Stok</span>
+    <button class="notif-panel-close" onclick="closeNotifPanel()">✕</button>
+  </div>
+  <div class="notif-list" id="notif-list"></div>
+  <div class="notif-footer">
+    <button class="notif-wa-btn" onclick="sendWANotif()">💬 Kirim via WhatsApp</button>
+    <button class="notif-wa-btn email" onclick="sendEmailNotif()">📧 Kirim via Email</button>
+  </div>
+</div>
+<div class="save-indicator" id="save-indicator">💾 Data tersimpan</div>
+
 <nav class="topnav">
   <div class="logo" onclick="gotoPage('barang')">
     <div class="logo-badge">🗂️</div>
@@ -459,7 +542,7 @@ tr:hover td{background:#F5F7FC}
   </ul>
   <div class="nav-right">
     <button class="nav-icon-btn" onclick="focusSearch()" title="Cari">🔍</button>
-    <button class="notif-btn" onclick="gotoPage('laporan')">📊 LAPORAN <span class="notif-badge" id="low-count">0</span></button>
+    <button class="notif-btn" onclick="toggleNotifPanel()">🔔 NOTIF <span class="notif-badge" id="low-count">0</span></button>
     <button class="topnav-user" onclick="toggleUserDropdown()" id="user-btn">
       <div class="user-avatar-nav">👤</div>
       <span class="user-name-nav" id="nav-username">—</span>
@@ -471,6 +554,8 @@ tr:hover td{background:#F5F7FC}
         </div>
         <div class="ud-item">👤 &nbsp;Profil Saya</div>
         <div class="ud-item">🔑 &nbsp;Ganti Password</div>
+        <div class="ud-divider"></div>
+        <div class="ud-item" onclick="clearAllData()">🗑️ &nbsp;Reset Data</div>
         <div class="ud-divider"></div>
         <div class="ud-item danger" onclick="doLogout()">🚪 &nbsp;Keluar</div>
       </div>
@@ -494,6 +579,7 @@ tr:hover td{background:#F5F7FC}
 
 <div class="toolbar" id="toolbar-el">
   <div style="display:flex;align-items:center;gap:8px">
+    <button class="filter-btn" onclick="openBarcodeModal()" style="gap:5px">📷 Scan</button>
     <button class="filter-btn" onclick="toggleFilter()">⚙ Filter</button>
     <span class="item-count" id="item-count">— Barang</span>
   </div>
@@ -541,6 +627,19 @@ tr:hover td{background:#F5F7FC}
       <button class="exp-btn print" onclick="window.print()">🖨️ Cetak</button>
     </div>
     <div class="table-card"><div class="table-card-header"><div class="table-card-title">Daftar Stok Barang</div></div><div id="tbl-laporan"></div></div>
+    <div class="chart-section">
+      <div class="chart-head">
+        <div class="chart-head-title">📈 Grafik Tren Stok</div>
+        <div class="chart-tabs">
+          <button class="chart-tab active" onclick="setChartTab('bulanan',this)">Bulanan</button>
+          <button class="chart-tab" onclick="setChartTab('barang',this)">Per Barang</button>
+          <button class="chart-tab" onclick="setChartTab('status',this)">Status Stok</button>
+        </div>
+      </div>
+      <div class="chart-body">
+        <div class="chart-canvas-wrap"><canvas id="main-chart"></canvas></div>
+      </div>
+    </div>
     <div class="rekap-section">
       <div class="rekap-head">
         <div class="rekap-head-title">📅 Rekap Bulanan</div>
@@ -622,6 +721,67 @@ tr:hover td{background:#F5F7FC}
   </div>
 </footer>
 
+<!-- BARCODE MODAL -->
+<div class="overlay" id="modal-barcode">
+  <div class="modal barcode-modal">
+    <div class="modal-top" style="background:linear-gradient(135deg,#1a237e,#283593)">
+      <button class="modal-close" onclick="closeBarcodeModal()">✕</button>
+      <div class="modal-ios-icon" style="background:linear-gradient(145deg,#3949AB,#1a237e)">📷</div>
+      <div class="modal-title">Scan Barcode / QR</div>
+      <div class="modal-subtitle">Arahkan kamera ke barcode produk</div>
+    </div>
+    <div class="modal-content">
+      <div id="barcode-video-wrap">
+        <div id="barcode-viewport"></div>
+        <div class="barcode-overlay">
+          <div class="barcode-frame"></div>
+          <div class="barcode-scan-line"></div>
+        </div>
+      </div>
+      <div class="barcode-result-box" id="barcode-result-box">Menunggu deteksi barcode...</div>
+      <div class="barcode-manual-row">
+        <input class="mf-input" type="text" id="barcode-manual-input" placeholder="Atau ketik kode barcode manual..." style="flex:1" onkeydown="if(event.key==='Enter')searchBarcode(this.value)">
+        <button class="mbtn-masuk" style="white-space:nowrap;padding:9px 14px" onclick="searchBarcode(document.getElementById('barcode-manual-input').value)">🔍 Cari</button>
+      </div>
+      <div id="barcode-found-info" style="display:none;background:var(--green-bg);border:1.5px solid #B2DFCC;border-radius:10px;padding:12px 14px;margin-bottom:10px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px" id="bfi-nama">—</div>
+        <div style="font-size:11px;color:var(--muted)" id="bfi-detail">—</div>
+        <div style="display:flex;gap:6px;margin-top:10px">
+          <button class="mbtn-masuk" style="flex:1;padding:8px" onclick="openFromBarcode('masuk')">📥 Catat Masuk</button>
+          <button class="mbtn-keluar" style="flex:1;padding:8px" onclick="openFromBarcode('keluar')">📤 Catat Keluar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PHOTO MODAL -->
+<div class="overlay" id="modal-photo">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-top" style="background:linear-gradient(135deg,#4527A0,#311B92)">
+      <button class="modal-close" onclick="closeModal('modal-photo')">✕</button>
+      <div class="modal-ios-icon" style="background:linear-gradient(145deg,#673AB7,#4527A0)" id="photo-modal-icon">📷</div>
+      <div class="modal-title" id="photo-modal-title">Foto Barang</div>
+      <div class="modal-subtitle" id="photo-modal-sub">Upload foto untuk identifikasi visual</div>
+    </div>
+    <div class="modal-content">
+      <img id="photo-preview-large" class="modal-photo-preview" src="" alt="Foto Barang">
+      <div class="modal-photo-placeholder" id="photo-placeholder" onclick="document.getElementById('photo-file-input').click()">
+        <span style="font-size:28px">🖼️</span>
+        <span>Klik untuk pilih foto</span>
+        <span style="font-size:10px">JPG, PNG, WebP — maks 2MB</span>
+      </div>
+      <input type="file" id="photo-file-input" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+      <div class="photo-action-row">
+        <button class="photo-btn upload" onclick="document.getElementById('photo-file-input').click()">📁 Pilih File</button>
+        <button class="photo-btn upload" onclick="openCameraCapture()">📷 Ambil Foto</button>
+        <button class="photo-btn delete" id="photo-delete-btn" onclick="deletePhoto()" style="display:none">🗑 Hapus</button>
+      </div>
+      <input type="hidden" id="photo-modal-bid">
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="modal-trx">
   <div class="modal">
     <div class="modal-top" id="modal-top-trx" style="background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%)">
@@ -697,6 +857,19 @@ tr:hover td{background:#F5F7FC}
               <div class="ipd-grid" id="ipd-grid"></div>
             </div>
           </div>
+        </div>
+      </div>
+      <div class="modal-photo-section">
+        <div class="mf-label" style="margin-bottom:6px">Foto Barang <span style="color:var(--muted);font-weight:400;font-size:9px">(opsional)</span></div>
+        <img id="add-photo-preview" class="modal-photo-preview" src="" alt="">
+        <div class="modal-photo-placeholder" id="add-photo-placeholder" onclick="document.getElementById('add-photo-input').click()">
+          <span style="font-size:22px">📷</span>
+          <span>Klik untuk upload foto</span>
+        </div>
+        <input type="file" id="add-photo-input" accept="image/*" style="display:none" onchange="handleAddPhoto(event)">
+        <div class="photo-action-row" id="add-photo-actions" style="display:none">
+          <button class="photo-btn upload" onclick="document.getElementById('add-photo-input').click()">📁 Ganti</button>
+          <button class="photo-btn delete" onclick="clearAddPhoto()">🗑 Hapus</button>
         </div>
       </div>
       <button class="mbtn-masuk" style="width:100%;padding:12px;font-size:13px;border-radius:9px;background:linear-gradient(135deg,#0D7A3E,#064D26)" onclick="simpanBarang()">💾 &nbsp;Simpan Barang</button>
@@ -812,13 +985,27 @@ function renderGrid(){
     var trxB=transaksi.filter(t=>t.bid===b.id);
     var tm=trxB.filter(t=>t.tipe==='masuk').reduce((a,t)=>a+t.jml,0);
     var tk=trxB.filter(t=>t.tipe==='keluar').reduce((a,t)=>a+t.jml,0);
+    var imgSection;
+    if(b.foto){
+      imgSection='<div class="pcard-img-wrap">'
+        +'<img class="pcard-photo" src="'+b.foto+'" alt="'+b.nama+'" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">'
+        +'<div class="pcard-img lokasi-'+b.lokasi.toLowerCase()+'" style="display:none">'
+        +'<span class="pcard-emoji" style="animation:float 3s ease-in-out '+(i*0.3).toFixed(1)+'s infinite">'+b.emoji+'</span>'
+        +'</div>'
+        +'<span class="pcard-weight">'+b.sat+'</span>'
+        +'<button class="photo-upload-btn" onclick="event.stopPropagation();openPhotoModal('+b.id+')">📷 Edit</button>'
+        +'<span class="loc-badge '+b.lokasi.toLowerCase()+'">'+b.lokasi+'</span>'
+        +'</div>';
+    } else {
+      imgSection='<div class="pcard-img lokasi-'+b.lokasi.toLowerCase()+'">'
+        +'<span class="pcard-emoji" style="animation:float 3s ease-in-out '+(i*0.3).toFixed(1)+'s infinite">'+b.emoji+'</span>'
+        +'<span class="pcard-weight">'+b.sat+'</span>'
+        +'<button class="photo-upload-btn" onclick="event.stopPropagation();openPhotoModal('+b.id+')">📷</button>'
+        +'<span class="loc-badge '+b.lokasi.toLowerCase()+'">'+b.lokasi+'</span>'
+        +'</div>';
+    }
     return '<div class="pcard" style="animation-delay:'+(i*0.055).toFixed(2)+'s" onclick="openTrxModal('+b.id+')">'
-      +'<div class="pcard-img lokasi-'+b.lokasi.toLowerCase()+'">'
-      +'<span class="pcard-emoji" style="animation:float 3s ease-in-out '+(i*0.3).toFixed(1)+'s infinite">'+b.emoji+'</span>'
-      +'<span class="pcard-weight">'+b.sat+'</span>'
-      +'<span class="fav-btn" onclick="event.stopPropagation()" title="'+tm+' masuk / '+tk+' keluar">ℹ</span>'
-      +'<span class="loc-badge '+b.lokasi.toLowerCase()+'">'+b.lokasi+'</span>'
-      +'</div>'
+      +imgSection
       +'<div class="pcard-body">'
       +'<div class="pcard-name">'+b.nama+'</div>'
       +'<div class="pcard-cat">'+b.kat+'</div>'
@@ -1141,7 +1328,7 @@ function gotoPage(p){
   var catVis=p==='barang';
   document.getElementById('catbar').style.display=catVis?'block':'none';
   document.getElementById('toolbar-el').style.display=catVis?'flex':'none';
-  if(p==='laporan'){renderLaporan();renderRekap();}
+  if(p==='laporan'){renderLaporan();renderRekap();setTimeout(renderMainChart,100);}
   if(p==='riwayat')renderRiwayat();
   if(p==='permintaan')renderPermintaan();
   if(p==='users')renderUsers();
@@ -1430,13 +1617,400 @@ function setDateDisplay(){
   document.getElementById('date-display').textContent=days[d.getDay()]+', '+d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear();
 }
 
-// =========== INIT ===========
+// =========== LOCALSTORAGE PERSISTENCE ===========
+var LS_KEY_BARANG='atk_barang_v1';
+var LS_KEY_TRX='atk_transaksi_v1';
+var LS_KEY_PERMINTAAN='atk_permintaan_v1';
+var LS_KEY_IDS='atk_ids_v1';
+var _saveTimeout=null;
+
+function saveData(){
+  try{
+    localStorage.setItem(LS_KEY_BARANG,JSON.stringify(barang));
+    localStorage.setItem(LS_KEY_TRX,JSON.stringify(transaksi));
+    localStorage.setItem(LS_KEY_PERMINTAAN,JSON.stringify(permintaan));
+    localStorage.setItem(LS_KEY_IDS,JSON.stringify({nextId,nextTrxId,nextReqId}));
+    showSaveIndicator();
+  }catch(e){console.warn('localStorage full or unavailable',e);}
+}
+
+function loadData(){
+  try{
+    var b=localStorage.getItem(LS_KEY_BARANG);
+    var t=localStorage.getItem(LS_KEY_TRX);
+    var p=localStorage.getItem(LS_KEY_PERMINTAAN);
+    var ids=localStorage.getItem(LS_KEY_IDS);
+    if(b)barang=JSON.parse(b);
+    if(t)transaksi=JSON.parse(t);
+    if(p)permintaan=JSON.parse(p);
+    if(ids){var o=JSON.parse(ids);nextId=o.nextId||nextId;nextTrxId=o.nextTrxId||nextTrxId;nextReqId=o.nextReqId||nextReqId;}
+    return !!(b||t);
+  }catch(e){console.warn('Error loading data',e);return false;}
+}
+
+function debounceSave(){
+  clearTimeout(_saveTimeout);
+  _saveTimeout=setTimeout(saveData,600);
+}
+
+function showSaveIndicator(){
+  var el=document.getElementById('save-indicator');
+  if(!el)return;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>el.classList.remove('show'),2000);
+}
+
+function clearAllData(){
+  if(!confirm('⚠️ Hapus SEMUA data tersimpan? Aksi ini tidak bisa dibatalkan!\n\nData akan kembali ke data demo awal.'))return;
+  localStorage.removeItem(LS_KEY_BARANG);
+  localStorage.removeItem(LS_KEY_TRX);
+  localStorage.removeItem(LS_KEY_PERMINTAAN);
+  localStorage.removeItem(LS_KEY_IDS);
+  location.reload();
+}
+
+// Patch doTrx, simpanBarang, saveMin, setPermintaanStatus to auto-save
+var _origDoTrx=doTrx;
+doTrx=function(tipe){_origDoTrx(tipe);debounceSave();};
+var _origSimpan=simpanBarang;
+simpanBarang=function(){_origSimpan();debounceSave();};
+var _origSaveMin=saveMin;
+saveMin=function(id){_origSaveMin(id);debounceSave();};
+var _origSetPStatus=setPermintaanStatus;
+setPermintaanStatus=function(id,s){_origSetPStatus(id,s);debounceSave();};
+
+// =========== CHART ===========
+var mainChart=null;
+var chartTab='bulanan';
+
+function setChartTab(tab,el){
+  chartTab=tab;
+  document.querySelectorAll('.chart-tab').forEach(t=>t.classList.remove('active'));
+  if(el)el.classList.add('active');
+  renderMainChart();
+}
+
+function renderMainChart(){
+  var canvas=document.getElementById('main-chart');
+  if(!canvas)return;
+  if(mainChart){mainChart.destroy();mainChart=null;}
+  var ctx=canvas.getContext('2d');
+  if(chartTab==='bulanan'){
+    var tahun=document.getElementById('rekap-tahun')?document.getElementById('rekap-tahun').value:new Date().getFullYear().toString();
+    var masukData=[],keluarData=[];
+    BULAN_NAMES.forEach((_,mi)=>{
+      var bs=tahun+'-'+String(mi+1).padStart(2,'0');
+      var bt=transaksi.filter(t=>t.tgl.startsWith(bs));
+      masukData.push(bt.filter(t=>t.tipe==='masuk').reduce((a,t)=>a+t.jml,0));
+      keluarData.push(bt.filter(t=>t.tipe==='keluar').reduce((a,t)=>a+t.jml,0));
+    });
+    mainChart=new Chart(ctx,{type:'bar',data:{
+      labels:BULAN_NAMES,
+      datasets:[
+        {label:'Masuk',data:masukData,backgroundColor:'rgba(13,122,62,0.8)',borderColor:'#0D7A3E',borderWidth:1.5,borderRadius:4},
+        {label:'Keluar',data:keluarData,backgroundColor:'rgba(192,57,43,0.8)',borderColor:'#C0392B',borderWidth:1.5,borderRadius:4}
+      ]
+    },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11},usePointStyle:true}},tooltip:{mode:'index',intersect:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{size:10}}}}}});
+  } else if(chartTab==='barang'){
+    var top=barang.slice().sort((a,b)=>b.stok-a.stok).slice(0,10);
+    var colors=top.map(b=>stockStatus(b)==='ok'?'rgba(13,122,62,0.8)':stockStatus(b)==='low'?'rgba(192,120,0,0.8)':'rgba(192,57,43,0.8)');
+    mainChart=new Chart(ctx,{type:'bar',data:{
+      labels:top.map(b=>b.nama.length>14?b.nama.slice(0,13)+'…':b.nama),
+      datasets:[{label:'Stok Saat Ini',data:top.map(b=>b.stok),backgroundColor:colors,borderRadius:4}]
+    },options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:(c)=>' '+c.parsed.x+' '+top[c.dataIndex].sat}}},scales:{x:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{size:10}}},y:{ticks:{font:{size:10}}}}}});
+  } else {
+    var ok=barang.filter(b=>stockStatus(b)==='ok').length;
+    var low=barang.filter(b=>stockStatus(b)==='low').length;
+    var out=barang.filter(b=>stockStatus(b)==='out').length;
+    mainChart=new Chart(ctx,{type:'doughnut',data:{
+      labels:['Stok Aman','Stok Menipis','Stok Habis'],
+      datasets:[{data:[ok,low,out],backgroundColor:['rgba(13,122,62,0.85)','rgba(192,120,0,0.85)','rgba(192,57,43,0.85)'],borderWidth:2,borderColor:'#fff'}]
+    },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},usePointStyle:true,padding:16}},tooltip:{callbacks:{label:(c)=>' '+c.label+': '+c.parsed+' barang'}}}}});
+  }
+}
+
+// =========== NOTIFICATION PANEL ===========
+function toggleNotifPanel(){
+  var p=document.getElementById('notif-panel');
+  if(p.classList.contains('open')){p.classList.remove('open');return;}
+  renderNotifList();
+  p.classList.add('open');
+}
+function closeNotifPanel(){document.getElementById('notif-panel').classList.remove('open');}
+
+function renderNotifList(){
+  var low=barang.filter(b=>stockStatus(b)!=='ok');
+  var list=document.getElementById('notif-list');
+  if(!low.length){list.innerHTML='<div class="notif-empty">✅ Semua stok dalam kondisi aman!</div>';return;}
+  list.innerHTML=low.map(b=>{
+    var st=stockStatus(b);
+    var icon=st==='out'?'❌':'⚠️';
+    var desc=st==='out'?'HABIS — segera lakukan pengadaan':'Menipis — tersisa '+b.stok+' '+b.sat+' (min '+b.min+')';
+    return '<div class="notif-item" onclick="openTrxModal('+b.id+');closeNotifPanel()">'
+      +'<div class="notif-dot '+st+'">'+icon+'</div>'
+      +'<div class="notif-info"><div class="notif-name">'+b.emoji+' '+b.nama+'</div><div class="notif-desc">'+b.lokasi+' — '+desc+'</div></div>'
+      +'</div>';
+  }).join('');
+}
+
+function getLowStockMessage(){
+  var low=barang.filter(b=>stockStatus(b)!=='ok');
+  if(!low.length)return null;
+  var lines=low.map(b=>{
+    var st=stockStatus(b)==='out'?'HABIS':'Menipis ('+b.stok+'/'+b.min+' '+b.sat+')';
+    return '• '+b.nama+' ['+b.lokasi+']: '+st;
+  });
+  return '🚨 *Notifikasi Stok ATK Pool Purosani*\n\n'+lines.join('\n')+'\n\nHarap segera lakukan pengadaan.\n_Sistem Inventory ATK Pool Purosani_';
+}
+
+function sendWANotif(){
+  var msg=getLowStockMessage();
+  if(!msg){toast('✅ Semua stok aman, tidak ada notifikasi','ok');return;}
+  var waNum=prompt('Masukkan nomor WhatsApp tujuan (contoh: 08123456789):','');
+  if(!waNum)return;
+  var clean=waNum.replace(/\D/g,'');
+  if(clean.startsWith('0'))clean='62'+clean.slice(1);
+  var url='https://wa.me/'+clean+'?text='+encodeURIComponent(msg);
+  window.open(url,'_blank');
+  toast('📤 Membuka WhatsApp...','ok');
+}
+
+function sendEmailNotif(){
+  var msg=getLowStockMessage();
+  if(!msg){toast('✅ Semua stok aman, tidak ada notifikasi','ok');return;}
+  var to=prompt('Masukkan alamat email tujuan:','inventory@purosani.go.id');
+  if(!to)return;
+  var subj=encodeURIComponent('[ATK Purosani] Notifikasi Stok Menipis');
+  var body=encodeURIComponent(msg.replace(/\*/g,'').replace(/_/g,''));
+  window.location.href='mailto:'+to+'?subject='+subj+'&body='+body;
+  toast('📧 Membuka email client...','ok');
+}
+
+document.addEventListener('click',function(e){
+  var panel=document.getElementById('notif-panel');
+  var notifBtn=document.querySelector('.notif-btn');
+  if(panel&&panel.classList.contains('open')&&!panel.contains(e.target)&&notifBtn&&!notifBtn.contains(e.target)){
+    panel.classList.remove('open');
+  }
+});
+
+// =========== BARCODE SCANNER ===========
+var barcodeScanning=false;
+var barcodeFoundId=null;
+
+function openBarcodeModal(){
+  barcodeFoundId=null;
+  document.getElementById('barcode-result-box').textContent='Menunggu deteksi barcode...';
+  document.getElementById('barcode-result-box').className='barcode-result-box';
+  document.getElementById('barcode-found-info').style.display='none';
+  document.getElementById('barcode-manual-input').value='';
+  document.getElementById('modal-barcode').classList.add('open');
+  startBarcodeScanner();
+}
+
+function closeBarcodeModal(){
+  stopBarcodeScanner();
+  document.getElementById('modal-barcode').classList.remove('open');
+}
+
+function startBarcodeScanner(){
+  if(typeof Quagga==='undefined'){
+    document.getElementById('barcode-result-box').textContent='Library scanner tidak tersedia. Gunakan input manual.';
+    return;
+  }
+  var viewport=document.getElementById('barcode-viewport');
+  Quagga.init({
+    inputStream:{name:'Live',type:'LiveStream',target:viewport,constraints:{width:320,height:240,facingMode:'environment'}},
+    decoder:{readers:['code_128_reader','ean_reader','ean_8_reader','code_39_reader','upc_reader']},
+    locate:true
+  },function(err){
+    if(err){
+      document.getElementById('barcode-result-box').textContent='Kamera tidak tersedia. Gunakan input manual di bawah.';
+      return;
+    }
+    barcodeScanning=true;
+    Quagga.start();
+  });
+  Quagga.onDetected(function(data){
+    var code=data.codeResult.code;
+    stopBarcodeScanner();
+    searchBarcode(code);
+    document.getElementById('barcode-manual-input').value=code;
+  });
+}
+
+function stopBarcodeScanner(){
+  if(typeof Quagga!=='undefined'&&barcodeScanning){
+    try{Quagga.stop();}catch(e){}
+    barcodeScanning=false;
+  }
+}
+
+function searchBarcode(code){
+  code=(code||'').trim();
+  if(!code)return;
+  // Search by barcode field or by name partial match
+  var found=barang.find(b=>b.barcode===code)||barang.find(b=>b.nama.toLowerCase().includes(code.toLowerCase()));
+  var box=document.getElementById('barcode-result-box');
+  var info=document.getElementById('barcode-found-info');
+  if(found){
+    box.textContent='✅ Barang ditemukan: '+found.nama;
+    box.className='barcode-result-box found';
+    barcodeFoundId=found.id;
+    document.getElementById('bfi-nama').textContent=found.emoji+' '+found.nama;
+    document.getElementById('bfi-detail').textContent=found.lokasi+' · '+found.kat+' · Stok: '+found.stok+' '+found.sat;
+    info.style.display='block';
+    toast('✅ Barang ditemukan: '+found.nama,'ok');
+  } else {
+    box.textContent='❌ Barang dengan kode "'+code+'" tidak ditemukan';
+    box.className='barcode-result-box';
+    info.style.display='none';
+    barcodeFoundId=null;
+    toast('❌ Barang tidak ditemukan','err');
+  }
+}
+
+function openFromBarcode(tipe){
+  if(!barcodeFoundId)return;
+  closeBarcodeModal();
+  openTrxModal(barcodeFoundId);
+  // pre-select tipe
+  if(tipe==='keluar')showPemohonField(true);
+}
+
+// =========== PHOTO FEATURE ===========
+var photoData={};
+var addPhotoTemp=null;
+var photoModalBid=null;
+
+function openPhotoModal(id){
+  photoModalBid=id;
+  var b=getB(id);
+  document.getElementById('photo-modal-icon').textContent=b.emoji;
+  document.getElementById('photo-modal-title').textContent='Foto: '+b.nama;
+  document.getElementById('photo-modal-sub').textContent=b.lokasi+' — '+b.kat;
+  document.getElementById('photo-modal-bid').value=id;
+  var prev=document.getElementById('photo-preview-large');
+  var ph=document.getElementById('photo-placeholder');
+  var delBtn=document.getElementById('photo-delete-btn');
+  document.getElementById('photo-file-input').value='';
+  if(b.foto){
+    prev.src=b.foto;prev.style.display='block';
+    ph.style.display='none';delBtn.style.display='block';
+  } else {
+    prev.style.display='none';ph.style.display='flex';delBtn.style.display='none';
+  }
+  document.getElementById('modal-photo').classList.add('open');
+}
+
+function handlePhotoUpload(e){
+  var file=e.target.files[0];
+  if(!file)return;
+  if(file.size>2*1024*1024){toast('⚠️ Ukuran file terlalu besar (maks 2MB)','err');return;}
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    var dataUrl=ev.target.result;
+    var id=parseInt(document.getElementById('photo-modal-bid').value);
+    var b=getB(id);
+    if(b){
+      b.foto=dataUrl;
+      var prev=document.getElementById('photo-preview-large');
+      prev.src=dataUrl;prev.style.display='block';
+      document.getElementById('photo-placeholder').style.display='none';
+      document.getElementById('photo-delete-btn').style.display='block';
+      debounceSave();
+      renderGrid();
+      toast('✅ Foto berhasil diunggah','ok');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function deletePhoto(){
+  var id=parseInt(document.getElementById('photo-modal-bid').value);
+  var b=getB(id);
+  if(b&&confirm('Hapus foto barang ini?')){
+    delete b.foto;
+    document.getElementById('photo-preview-large').style.display='none';
+    document.getElementById('photo-placeholder').style.display='flex';
+    document.getElementById('photo-delete-btn').style.display='none';
+    debounceSave();renderGrid();
+    toast('🗑 Foto dihapus','ok');
+  }
+}
+
+function openCameraCapture(){
+  var input=document.getElementById('photo-file-input');
+  input.setAttribute('capture','environment');
+  input.click();
+}
+
+function handleAddPhoto(e){
+  var file=e.target.files[0];
+  if(!file)return;
+  if(file.size>2*1024*1024){toast('⚠️ Ukuran file terlalu besar (maks 2MB)','err');return;}
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    addPhotoTemp=ev.target.result;
+    var prev=document.getElementById('add-photo-preview');
+    prev.src=addPhotoTemp;prev.style.display='block';
+    document.getElementById('add-photo-placeholder').style.display='none';
+    document.getElementById('add-photo-actions').style.display='flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearAddPhoto(){
+  addPhotoTemp=null;
+  var prev=document.getElementById('add-photo-preview');
+  prev.style.display='none';prev.src='';
+  document.getElementById('add-photo-placeholder').style.display='flex';
+  document.getElementById('add-photo-actions').style.display='none';
+  document.getElementById('add-photo-input').value='';
+}
+
+// Patch simpanBarang to include photo
+var _origSimpan2=simpanBarang;
+simpanBarang=function(){
+  var nama=document.getElementById('a-nama').value.trim();
+  var lok=document.getElementById('a-lokasi').value;
+  var kat=document.getElementById('a-kat').value.trim();
+  var sat=document.getElementById('a-sat').value.trim();
+  var stok=parseInt(document.getElementById('a-stok').value)||0;
+  var min=parseInt(document.getElementById('a-min').value)||5;
+  var emoji=document.getElementById('a-emoji').value;
+  if(!nama||!kat||!sat){toast('⚠️ Nama, kategori & satuan wajib diisi','err');return;}
+  var obj={id:nextId++,nama,lokasi:lok,kat,sat,stok,min,emoji};
+  if(addPhotoTemp)obj.foto=addPhotoTemp;
+  barang.push(obj);
+  closeModal('modal-add');
+  document.getElementById('a-nama').value='';document.getElementById('a-kat').value='';
+  document.getElementById('a-sat').value='';document.getElementById('a-stok').value='';
+  clearAddPhoto();
+  buildCatbar();renderGrid();debounceSave();
+  toast('✅ Barang "'+nama+'" berhasil ditambahkan','ok');
+};
+
+// =========== OVERRIDE INIT TO LOAD DATA ===========
+// Load persisted data first
+loadData();
+// Add overlay close listeners for new modals
+document.getElementById('modal-barcode').addEventListener('click',function(e){if(e.target===this)closeBarcodeModal();});
+document.getElementById('modal-photo').addEventListener('click',function(e){if(e.target===this)closeModal('modal-photo');});
+// Init
 buildCatbar();
 renderGrid();
 updateStats();
 setDateDisplay();
 document.getElementById('mf-tanggal').value=todayStr();
 initRekapTahun();
+// Show data source toast
+setTimeout(function(){
+  var had=localStorage.getItem(LS_KEY_BARANG);
+  if(had)toast('💾 Data tersimpan berhasil dimuat','ok');
+},800);
+
 </script>
 </body>
 </html>
