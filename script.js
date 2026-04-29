@@ -6,8 +6,8 @@
 // =========== KONFIGURASI SUPABASE ===========
 // Ganti dengan URL dan anon key project Anda
 // Dapatkan di: Supabase Dashboard → Settings → API
-const SUPABASE_URL   = 'https://XXXXXXXXXXXXXXXXXXXX.supabase.co';
-const SUPABASE_KEY   = 'eyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+const SUPABASE_URL   = 'https://aejbkesrwvsmeeqvotxo.supabase.co/rest/v1/';
+const SUPABASE_KEY   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlamJrZXNyd3ZzbWVlcXZvdHhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzA3NzEsImV4cCI6MjA5MjgwNjc3MX0.GgKEXotu19X9Za6l8iyNcAkXcztwzO5k7D7o4Spzm70';
 const STORAGE_BUCKET = 'foto-barang';
 
 const { createClient } = supabase;
