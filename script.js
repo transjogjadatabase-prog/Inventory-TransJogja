@@ -808,6 +808,275 @@ function clearAddPhoto(){addPhotoFile=null;addPhotoTemp=null;var prev=document.g
 document.getElementById('modal-barcode').addEventListener('click',function(e){if(e.target===this)closeBarcodeModal();});
 document.getElementById('modal-photo').addEventListener('click',function(e){if(e.target===this)closeModal('modal-photo');});
 
+
+// =========== IMPORT BARANG ===========
+var importBarangRows = [];
+
+function openImportModal() {
+  importBarangRows = [];
+  document.getElementById('import-barang-file').value = '';
+  document.getElementById('import-barang-preview').style.display = 'none';
+  document.getElementById('import-barang-error').style.display = 'none';
+  var btn = document.getElementById('import-barang-btn');
+  btn.style.opacity = '0.4'; btn.style.pointerEvents = 'none';
+  document.getElementById('modal-import').classList.add('open');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('modal-import').addEventListener('click', function(e) { if(e.target===this) closeModal('modal-import'); });
+  document.getElementById('modal-import-trx').addEventListener('click', function(e) { if(e.target===this) closeModal('modal-import-trx'); });
+  document.getElementById('modal-reset').addEventListener('click', function(e) { if(e.target===this) closeModal('modal-reset'); });
+});
+
+function handleImportBarangFile(file) {
+  if (!file) return;
+  var errEl = document.getElementById('import-barang-error');
+  errEl.style.display = 'none';
+  var ext = file.name.split('.').pop().toLowerCase();
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var rows = [];
+      if (ext === 'csv') {
+        var lines = e.target.result.split('\n').map(l => l.trim()).filter(Boolean);
+        // Skip header jika ada
+        var start = lines[0].toLowerCase().includes('nama') ? 1 : 0;
+        rows = lines.slice(start).map(l => l.split(',').map(c => c.trim()));
+      } else {
+        var wb = XLSX.read(e.target.result, { type:'array' });
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        var data = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+        var start = data[0] && String(data[0][0]).toLowerCase().includes('nama') ? 1 : 0;
+        rows = data.slice(start).filter(r => r[0]);
+      }
+      // Validasi kolom minimal
+      var valid = rows.filter(r => r[0] && r[1] && r[2] && r[3]);
+      if (!valid.length) throw new Error('Tidak ada data valid. Pastikan format: nama,lokasi,kat,sat,stok,min,emoji');
+      importBarangRows = valid;
+      // Preview tabel
+      document.getElementById('import-barang-count').textContent = valid.length;
+      var heads = ['Nama','Lokasi','Kategori','Satuan','Stok','Min','Emoji'];
+      var html = '<thead style="background:var(--navy);color:#fff"><tr>'
+        + heads.map(h=>'<th style="padding:5px 8px;text-align:left">'+h+'</th>').join('')
+        + '</tr></thead><tbody>'
+        + valid.slice(0, 10).map((r,i) =>
+            '<tr style="background:'+(i%2?'#f8f9fa':'#fff')+'"><td style="padding:4px 8px">'+(r[0]||'')+'</td><td style="padding:4px 8px">'+(r[1]||'')+'</td><td style="padding:4px 8px">'+(r[2]||'')+'</td><td style="padding:4px 8px">'+(r[3]||'')+'</td><td style="padding:4px 8px">'+(r[4]||0)+'</td><td style="padding:4px 8px">'+(r[5]||5)+'</td><td style="padding:4px 8px">'+(r[6]||'📦')+'</td></tr>'
+          ).join('')
+        + (valid.length > 10 ? '<tr><td colspan="7" style="padding:6px 8px;color:var(--muted);font-style:italic">...dan '+(valid.length-10)+' baris lainnya</td></tr>' : '')
+        + '</tbody>';
+      document.getElementById('import-barang-table').innerHTML = html;
+      document.getElementById('import-barang-preview').style.display = 'block';
+      var btn = document.getElementById('import-barang-btn');
+      btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
+    } catch(err) {
+      errEl.textContent = '❌ ' + err.message;
+      errEl.style.display = 'block';
+    }
+  };
+  if (ext === 'csv') reader.readAsText(file, 'UTF-8');
+  else reader.readAsArrayBuffer(file);
+}
+
+async function doImportBarang() {
+  if (!importBarangRows.length) return;
+  var btn = document.getElementById('import-barang-btn');
+  btn.textContent = '⏳ Mengimpor...'; btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none';
+  var sukses = 0, gagal = 0, gagalList = [];
+  for (var r of importBarangRows) {
+    var obj = {
+      nama:   (r[0]||'').trim(),
+      lokasi: (r[1]||'Kantor').trim(),
+      kat:    (r[2]||'Lainnya').trim(),
+      sat:    (r[3]||'pcs').trim(),
+      stok:   parseInt(r[4]) || 0,
+      min:    parseInt(r[5]) || 5,
+      emoji:  (r[6]||'📦').trim(),
+      foto:   null,
+    };
+    if (!obj.nama) continue;
+    try {
+      // Gunakan session_replication_role via RPC agar stok tidak kena trigger
+      var { data, error } = await sb.from('barang').insert({
+        nama:obj.nama, lokasi:obj.lokasi, kat:obj.kat, sat:obj.sat,
+        stok:obj.stok, min:obj.min, emoji:obj.emoji, foto_url:null
+      }).select().single();
+      if (error) throw error;
+      barang.push(mapBarang(data));
+      sukses++;
+    } catch(e) {
+      gagal++; gagalList.push(obj.nama + ': ' + e.message);
+    }
+  }
+  buildCatbar(); renderGrid(); updateStats();
+  closeModal('modal-import');
+  if (gagal) toast('⚠️ '+sukses+' berhasil, '+gagal+' gagal diimpor','');
+  else toast('✅ '+sukses+' barang berhasil diimpor','ok');
+  if (gagalList.length) console.warn('Import gagal:', gagalList);
+  btn.textContent = '📥 Import Sekarang'; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
+}
+
+// =========== IMPORT TRANSAKSI ===========
+var importTrxRows = [];
+
+function openImportTrxModal() {
+  importTrxRows = [];
+  document.getElementById('import-trx-file').value = '';
+  document.getElementById('import-trx-preview').style.display = 'none';
+  document.getElementById('import-trx-error').style.display = 'none';
+  var btn = document.getElementById('import-trx-btn');
+  btn.style.opacity = '0.4'; btn.style.pointerEvents = 'none';
+  document.getElementById('modal-import-trx').classList.add('open');
+}
+
+function handleImportTrxFile(file) {
+  if (!file) return;
+  var errEl = document.getElementById('import-trx-error');
+  errEl.style.display = 'none';
+  var ext = file.name.split('.').pop().toLowerCase();
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var rows = [];
+      if (ext === 'csv') {
+        var lines = e.target.result.split('\n').map(l => l.trim()).filter(Boolean);
+        var start = lines[0].toLowerCase().includes('nama') ? 1 : 0;
+        rows = lines.slice(start).map(l => l.split(',').map(c => c.trim()));
+      } else {
+        var wb = XLSX.read(e.target.result, { type:'array' });
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        var data = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+        var start = data[0] && String(data[0][0]).toLowerCase().includes('nama') ? 1 : 0;
+        rows = data.slice(start).filter(r => r[0]);
+      }
+      var valid = rows.filter(r => r[0] && r[1] && r[2]);
+      if (!valid.length) throw new Error('Tidak ada data valid. Pastikan format: nama_barang,tipe,jumlah,tanggal,keterangan,pemohon');
+      // Validasi nama barang
+      var notFound = [];
+      valid.forEach(r => { if (!barang.find(b => b.nama.toLowerCase()===String(r[0]).toLowerCase().trim())) notFound.push(r[0]); });
+      if (notFound.length) {
+        throw new Error('Nama barang tidak ditemukan di database: ' + [...new Set(notFound)].join(', '));
+      }
+      importTrxRows = valid;
+      document.getElementById('import-trx-count').textContent = valid.length;
+      var heads = ['Nama Barang','Tipe','Jumlah','Tanggal','Keterangan','Pemohon'];
+      var html = '<thead style="background:var(--green);color:#fff"><tr>'
+        + heads.map(h=>'<th style="padding:5px 8px;text-align:left">'+h+'</th>').join('')
+        + '</tr></thead><tbody>'
+        + valid.slice(0,10).map((r,i) =>
+            '<tr style="background:'+(i%2?'#f8fff4':'#fff')+'"><td style="padding:4px 8px">'+(r[0]||'')+'</td><td style="padding:4px 8px;color:'+(r[1]==='masuk'?'var(--green)':'var(--red)')+'">'+r[1]+'</td><td style="padding:4px 8px">'+r[2]+'</td><td style="padding:4px 8px">'+(r[3]||todayStr())+'</td><td style="padding:4px 8px">'+(r[4]||'-')+'</td><td style="padding:4px 8px">'+(r[5]||'')+'</td></tr>'
+          ).join('')
+        + (valid.length > 10 ? '<tr><td colspan="6" style="padding:6px 8px;color:var(--muted);font-style:italic">...dan '+(valid.length-10)+' baris lainnya</td></tr>' : '')
+        + '</tbody>';
+      document.getElementById('import-trx-table').innerHTML = html;
+      document.getElementById('import-trx-preview').style.display = 'block';
+      var btn = document.getElementById('import-trx-btn');
+      btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
+    } catch(err) {
+      errEl.textContent = '❌ ' + err.message;
+      errEl.style.display = 'block';
+    }
+  };
+  if (ext === 'csv') reader.readAsText(file, 'UTF-8');
+  else reader.readAsArrayBuffer(file);
+}
+
+async function doImportTrx() {
+  if (!importTrxRows.length) return;
+  var btn = document.getElementById('import-trx-btn');
+  btn.textContent = '⏳ Mengimpor...'; btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none';
+  var sukses = 0, gagal = 0;
+  for (var r of importTrxRows) {
+    var namaBrg = String(r[0]).trim().toLowerCase();
+    var b = barang.find(x => x.nama.toLowerCase() === namaBrg);
+    if (!b) { gagal++; continue; }
+    var tipe  = String(r[1]).trim().toLowerCase();
+    var jml   = parseInt(r[2]) || 0;
+    var tgl   = String(r[3]).trim() || todayStr();
+    var ket   = String(r[4]||'-').trim();
+    var pemohon = String(r[5]||'').trim();
+    if (!jml || !['masuk','keluar'].includes(tipe)) { gagal++; continue; }
+    try {
+      // Insert langsung tanpa trigger (bypass stok update) — stok di DB tetap konsisten
+      // Gunakan insert biasa agar trigger update stok berjalan normal
+      var newTrx = await sbInsertTransaksi({ bid:b.id, tipe, jml, tgl, ket, lok:b.lokasi, pemohon });
+      if (tipe==='masuk') b.stok += jml; else b.stok -= jml;
+      transaksi.push(newTrx);
+      sukses++;
+    } catch(e) { gagal++; console.warn('Import trx gagal:', r[0], e.message); }
+  }
+  renderGrid(); buildCatbar(); updateStats(); renderRiwayat();
+  closeModal('modal-import-trx');
+  if (gagal) toast('⚠️ '+sukses+' berhasil, '+gagal+' transaksi gagal diimpor','');
+  else toast('✅ '+sukses+' transaksi berhasil diimpor','ok');
+  btn.textContent = '📥 Import Sekarang'; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
+}
+
+// =========== RESET DATA ===========
+function openResetModal() {
+  document.getElementById('reset-transaksi').checked = false;
+  document.getElementById('reset-permintaan').checked = false;
+  document.getElementById('reset-barang').checked = false;
+  document.getElementById('reset-confirm-input').value = '';
+  var btn = document.getElementById('reset-confirm-btn');
+  btn.style.opacity = '0.4'; btn.style.pointerEvents = 'none';
+  document.getElementById('modal-reset').classList.add('open');
+}
+function checkResetConfirm() {
+  var val = document.getElementById('reset-confirm-input').value;
+  var btn = document.getElementById('reset-confirm-btn');
+  var ada = document.getElementById('reset-transaksi').checked
+    || document.getElementById('reset-permintaan').checked
+    || document.getElementById('reset-barang').checked;
+  if (val === 'HAPUS' && ada) {
+    btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
+  } else {
+    btn.style.opacity = '0.4'; btn.style.pointerEvents = 'none';
+  }
+}
+async function doResetData() {
+  var delTrx  = document.getElementById('reset-transaksi').checked;
+  var delPerm = document.getElementById('reset-permintaan').checked;
+  var delBrg  = document.getElementById('reset-barang').checked;
+  var btn = document.getElementById('reset-confirm-btn');
+  btn.textContent = '⏳ Menghapus...'; btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none';
+  try {
+    // Hapus sesuai pilihan (urutan: transaksi → permintaan → barang karena FK)
+    if (delTrx || delBrg) {
+      var { error: e1 } = await sb.from('transaksi').delete().neq('id', 0);
+      if (e1) throw e1;
+      transaksi = [];
+    }
+    if (delPerm || delBrg) {
+      var { error: e2 } = await sb.from('permintaan').delete().neq('id', 0);
+      if (e2) throw e2;
+      permintaan = [];
+    }
+    if (delBrg) {
+      var { error: e3 } = await sb.from('barang').delete().neq('id', 0);
+      if (e3) throw e3;
+      barang = [];
+    }
+    // Jika hanya reset stok barang (reset via recalculate)
+    if (!delBrg && delTrx) {
+      // Stok semua barang jadi 0 setelah transaksi dihapus
+      for (var b of barang) {
+        await sb.from('barang').update({ stok: 0 }).eq('id', b.id);
+        b.stok = 0;
+      }
+    }
+    buildCatbar(); renderGrid(); updateStats();
+    closeModal('modal-reset');
+    var msg = [];
+    if (delTrx||delBrg)  msg.push('transaksi');
+    if (delPerm||delBrg) msg.push('permintaan');
+    if (delBrg)          msg.push('barang');
+    toast('🗑️ Data '+msg.join(', ')+' berhasil dihapus','ok');
+  } catch(e) {
+    toast('❌ Gagal hapus: '+e.message,'err');
+  }
+  btn.textContent = '🗑️ Hapus Sekarang'; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
+}
+
 // =========== INIT ===========
 (async function init(){
   setDateDisplay();
