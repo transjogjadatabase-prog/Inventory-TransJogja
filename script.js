@@ -267,6 +267,7 @@ function renderGrid() {
       +'<div class="pcard-foot">'
       +'<div class="pcard-stock"><span class="pcard-stok-num '+st+'">'+b.stok+'</span><span class="pcard-unit"> '+b.sat+'</span></div>'
       +'<div class="action-btns">'
+      +'<button class="btn-edit-brg" onclick="event.stopPropagation();openEditModal('+b.id+')" title="Edit barang">✏️</button>'
       +'<button class="btn-keluar" onclick="quickTrx(event,'+b.id+',\'keluar\')">− Keluar</button>'
       +'<button class="btn-masuk"  onclick="quickTrx(event,'+b.id+',\'masuk\')">+ Masuk</button>'
       +'</div></div></div></div>';
@@ -435,7 +436,10 @@ var ICON_DB = [
   {em:'🔧',name:'Kunci Pas',cat:'Perawatan'},{em:'🔨',name:'Palu',cat:'Perawatan'},{em:'🪛',name:'Obeng',cat:'Perawatan'},
   {em:'🧰',name:'Toolbox',cat:'Perawatan'},{em:'⚙️',name:'Roda Gigi',cat:'Perawatan'},{em:'🪚',name:'Gergaji',cat:'Perawatan'},
   {em:'🔩',name:'Baut',cat:'Perawatan'},{em:'🪝',name:'Pengait',cat:'Perawatan'},{em:'🔗',name:'Rantai',cat:'Perawatan'},
-  {em:'📦',name:'Kardus',cat:'Lainnya'},{em:'🎁',name:'Hadiah',cat:'Lainnya'},{em:'🧃',name:'Minuman',cat:'Lainnya'},
+  {em:'🪪',name:'Kartu ID',cat:'Kartu'},{em:'💳',name:'Kartu Kredit',cat:'Kartu'},{em:'🎫',name:'Tiket',cat:'Kartu'},
+  {em:'🎟️',name:'Kupon',cat:'Kartu'},{em:'📛',name:'Name Tag',cat:'Kartu'},{em:'🏷️',name:'Label Harga',cat:'Kartu'},
+  {em:'📇',name:'Kartu Nama',cat:'Kartu'},{em:'🗃️',name:'Kotak Kartu',cat:'Kartu'},{em:'📋',name:'Form',cat:'Kartu'},
+  {em:'📜',name:'Surat Resmi',cat:'Kartu'},{em:'🪙',name:'Koin',cat:'Kartu'},{em:'🎴',name:'Kartu Game',cat:'Kartu'},
   {em:'☕',name:'Kopi',cat:'Lainnya'},{em:'🍵',name:'Teh',cat:'Lainnya'},{em:'💊',name:'Obat',cat:'Lainnya'},
   {em:'🩺',name:'P3K',cat:'Lainnya'},{em:'🩹',name:'Plester',cat:'Lainnya'},{em:'🧪',name:'Lab',cat:'Lainnya'},
   {em:'📮',name:'Pos',cat:'Lainnya'},{em:'🎨',name:'Cat',cat:'Lainnya'},{em:'🖼️',name:'Gambar',cat:'Lainnya'},
@@ -809,6 +813,137 @@ document.getElementById('modal-barcode').addEventListener('click',function(e){if
 document.getElementById('modal-photo').addEventListener('click',function(e){if(e.target===this)closeModal('modal-photo');});
 
 
+// =========== EDIT BARANG ===========
+var selectedEmojiEdit = '📦';
+var iconCatActiveEdit  = 'Semua';
+
+function openEditModal(id) {
+  var b = getB(id);
+  if (!b) return;
+  document.getElementById('e-id').value    = id;
+  document.getElementById('e-nama').value  = b.nama;
+  document.getElementById('e-kat').value   = b.kat;
+  document.getElementById('e-sat').value   = b.sat;
+  document.getElementById('e-stok').value  = b.stok;
+  document.getElementById('e-min').value   = b.min;
+  document.getElementById('e-lokasi').value = b.lokasi;
+  selectedEmojiEdit = b.emoji || '📦';
+  document.getElementById('e-emoji').value = selectedEmojiEdit;
+  document.getElementById('ipt-emoji-preview-edit').textContent = selectedEmojiEdit;
+  document.getElementById('ipt-name-preview-edit').textContent  = b.nama;
+  var bg = CAT_COLORS[b.kat] || 'linear-gradient(145deg,#4A90E2,#1565C0)';
+  document.getElementById('edit-preview').style.background = bg;
+  document.getElementById('edit-preview').textContent = selectedEmojiEdit;
+  document.getElementById('modal-edit').classList.add('open');
+}
+
+function updateEditPreview() {
+  var lok = document.getElementById('e-lokasi').value;
+  var kat = document.getElementById('e-kat').value.trim();
+  var em  = document.getElementById('e-emoji').value;
+  var bg  = CAT_COLORS[kat] || (lok==='Kantor' ? 'linear-gradient(145deg,#4A90E2,#1565C0)' : 'linear-gradient(145deg,#FF8F00,#E65100)');
+  document.getElementById('edit-preview').style.background = bg;
+  document.getElementById('edit-preview').textContent = em;
+}
+
+async function simpanEditBarang() {
+  var id    = parseInt(document.getElementById('e-id').value);
+  var nama  = document.getElementById('e-nama').value.trim();
+  var lokasi= document.getElementById('e-lokasi').value;
+  var kat   = document.getElementById('e-kat').value.trim();
+  var sat   = document.getElementById('e-sat').value.trim();
+  var stok  = parseInt(document.getElementById('e-stok').value) || 0;
+  var min   = parseInt(document.getElementById('e-min').value) || 0;
+  var emoji = document.getElementById('e-emoji').value || '📦';
+  if (!nama || !kat || !sat) { toast('⚠️ Nama, kategori & satuan wajib diisi', 'err'); return; }
+  try {
+    showLoading('⏳ Menyimpan perubahan...');
+    var { error } = await sb.from('barang').update({ nama, lokasi, kat, sat, stok, min, emoji }).eq('id', id);
+    if (error) throw error;
+    var b = getB(id);
+    b.nama = nama; b.lokasi = lokasi; b.kat = kat;
+    b.sat  = sat;  b.stok   = stok;  b.min = min; b.emoji = emoji;
+    closeModal('modal-edit');
+    buildCatbar(); renderGrid(); updateStats();
+    hideLoading(); showSaveIndicator();
+    toast('✅ Barang "' + nama + '" berhasil diperbarui', 'ok');
+  } catch(e) { hideLoading(); toast('❌ Gagal menyimpan: ' + e.message, 'err'); }
+}
+
+async function konfirmasiHapusBarang() {
+  var id = parseInt(document.getElementById('e-id').value);
+  var b  = getB(id);
+  if (!b) return;
+  if (!confirm('⚠️ Hapus barang "' + b.nama + '"?\n\nSemua transaksi & permintaan terkait juga akan terhapus.')) return;
+  try {
+    showLoading('⏳ Menghapus barang...');
+    // Hapus transaksi & permintaan dulu (FK cascade harusnya handle ini, tapi eksplisit lebih aman)
+    await sb.from('transaksi').delete().eq('barang_id', id);
+    await sb.from('permintaan').delete().eq('barang_id', id);
+    var { error } = await sb.from('barang').delete().eq('id', id);
+    if (error) throw error;
+    // Hapus dari state lokal
+    barang     = barang.filter(x => x.id !== id);
+    transaksi  = transaksi.filter(x => x.bid !== id);
+    permintaan = permintaan.filter(x => x.bid !== id);
+    if (b.foto) await deleteFotoFromStorage(b.foto);
+    closeModal('modal-edit');
+    buildCatbar(); renderGrid(); updateStats();
+    hideLoading(); showSaveIndicator();
+    toast('🗑️ Barang "' + b.nama + '" berhasil dihapus', 'ok');
+  } catch(e) { hideLoading(); toast('❌ Gagal hapus: ' + e.message, 'err'); }
+}
+
+// Icon picker untuk modal EDIT
+function toggleIconPickerEdit() {
+  var dd = document.getElementById('icon-picker-dropdown-edit');
+  dd.classList.toggle('open');
+  if (dd.classList.contains('open')) {
+    buildIconPickerEdit();
+    setTimeout(() => { var s = document.getElementById('ipd-search-edit'); if(s){s.value='';s.focus();} }, 80);
+  }
+}
+function buildIconPickerEdit() {
+  var cats = ['Semua', ...new Set(ICON_DB.map(x => x.cat))];
+  document.getElementById('ipd-cats-edit').innerHTML = cats.map(c =>
+    '<button class="ipd-cat-btn' + (c===iconCatActiveEdit?' active':'') + '" onclick="setIconCatEdit(\'' + c + '\')">' + (c==='Semua'?'🔠 Semua':c) + '</button>'
+  ).join('');
+  renderIconGridEdit('');
+}
+function setIconCatEdit(cat) { iconCatActiveEdit = cat; buildIconPickerEdit(); }
+function filterIconsEdit(v)  { renderIconGridEdit(v); }
+function renderIconGridEdit(search) {
+  var list = ICON_DB.filter(x => {
+    if (iconCatActiveEdit !== 'Semua' && x.cat !== iconCatActiveEdit) return false;
+    if (search && !x.name.toLowerCase().includes(search.toLowerCase()) && !x.em.includes(search)) return false;
+    return true;
+  });
+  var grid = document.getElementById('ipd-grid-edit');
+  if (!list.length) { grid.innerHTML = '<div class="ipd-empty">Ikon tidak ditemukan</div>'; return; }
+  grid.innerHTML = list.map(x =>
+    '<div class="ipd-item' + (x.em===selectedEmojiEdit?' selected':'') + '" onclick="selectIconEdit(\'' + x.em + '\',\'' + x.name + '\')" title="' + x.name + '">'
+    + '<span class="ipd-em">' + x.em + '</span>'
+    + '<span class="ipd-lbl">' + x.name + '</span>'
+    + '</div>'
+  ).join('');
+}
+function selectIconEdit(em, name) {
+  selectedEmojiEdit = em;
+  document.getElementById('e-emoji').value = em;
+  document.getElementById('ipt-emoji-preview-edit').textContent = em;
+  document.getElementById('ipt-name-preview-edit').textContent  = name;
+  document.getElementById('icon-picker-dropdown-edit').classList.remove('open');
+  updateEditPreview();
+  renderIconGridEdit(document.getElementById('ipd-search-edit').value);
+}
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('icon-picker-wrap-edit');
+  if (wrap && !wrap.contains(e.target)) {
+    var dd = document.getElementById('icon-picker-dropdown-edit');
+    if (dd) dd.classList.remove('open');
+  }
+});
+
 // =========== IMPORT BARANG ===========
 var importBarangRows = [];
 
@@ -826,6 +961,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('modal-import').addEventListener('click', function(e) { if(e.target===this) closeModal('modal-import'); });
   document.getElementById('modal-import-trx').addEventListener('click', function(e) { if(e.target===this) closeModal('modal-import-trx'); });
   document.getElementById('modal-reset').addEventListener('click', function(e) { if(e.target===this) closeModal('modal-reset'); });
+  document.getElementById('modal-edit').addEventListener('click', function(e) { if(e.target===this) closeModal('modal-edit'); });
 });
 
 function handleImportBarangFile(file) {
