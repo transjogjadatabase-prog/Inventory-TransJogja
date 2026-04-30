@@ -48,7 +48,8 @@
       <button class="login-btn" onclick="doLogin()">🔐 &nbsp;MASUK KE SISTEM</button>
       <div class="login-err" id="login-err">⚠ Username atau password salah. Coba kembali.</div>
       <div class="login-demo">
-        © 2026 ATK Pool Purosani — TransJogja Yogyakarta || CREATED : Gilang Pradana 
+        Demo: <code>admin / admin123</code> &nbsp;·&nbsp; <code>staff / staff123</code> &nbsp;·&nbsp; <code>viewer / viewer123</code><br>
+        © 2026 ATK Pool Purosani — TransJogja Yogyakarta
       </div>
     </div>
   </div>
@@ -421,6 +422,56 @@
         </div>
       </div>
       <button class="mbtn-masuk" style="width:100%;padding:12px;font-size:13px;border-radius:9px;background:linear-gradient(135deg,#0D7A3E,#064D26)" onclick="simpanBarang()">💾 &nbsp;Simpan Barang</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL EDIT BARANG ===== -->
+<div class="overlay" id="modal-edit">
+  <div class="modal add-modal">
+    <div class="modal-top" style="background:linear-gradient(135deg,#1565C0,#003F88)">
+      <button class="modal-close" onclick="closeModal('modal-edit')">✕</button>
+      <div class="modal-ios-icon" id="edit-preview" style="background:linear-gradient(145deg,#4A90E2,#1565C0)">📦</div>
+      <div class="modal-title">Edit Barang</div>
+      <div class="modal-subtitle">Ubah data barang yang sudah ada</div>
+    </div>
+    <div class="modal-content">
+      <input type="hidden" id="e-id">
+      <div class="add-form-grid">
+        <div class="mf-group"><label class="mf-label">Nama Barang</label><input class="mf-input" id="e-nama" placeholder="Nama barang..."></div>
+        <div class="mf-group"><label class="mf-label">Lokasi</label><select class="mf-select" id="e-lokasi" onchange="updateEditPreview()"><option>Kantor</option><option>Halte</option></select></div>
+      </div>
+      <div class="add-form-grid triple">
+        <div class="mf-group"><label class="mf-label">Kategori</label><input class="mf-input" id="e-kat" placeholder="ATK, Elektronik..."></div>
+        <div class="mf-group"><label class="mf-label">Satuan</label><input class="mf-input" id="e-sat" placeholder="pcs, unit..."></div>
+        <div class="mf-group"><label class="mf-label">Stok Saat Ini</label><input class="mf-input" type="number" id="e-stok" min="0"></div>
+      </div>
+      <div class="add-form-grid">
+        <div class="mf-group"><label class="mf-label">Stok Minimum</label><input class="mf-input" type="number" id="e-min" value="5" min="0"></div>
+        <div class="mf-group"><label class="mf-label">Ikon Barang</label>
+          <div class="icon-picker-wrap" id="icon-picker-wrap-edit">
+            <button type="button" class="icon-picker-trigger" id="icon-picker-trigger-edit" onclick="toggleIconPickerEdit()">
+              <span class="ipt-emoji" id="ipt-emoji-preview-edit">📦</span>
+              <span class="ipt-name" id="ipt-name-preview-edit">Kardus / Umum</span>
+              <span class="ipt-arrow">▾</span>
+            </button>
+            <input type="hidden" id="e-emoji" value="📦">
+            <div class="icon-picker-dropdown" id="icon-picker-dropdown-edit">
+              <div class="ipd-search" style="position:relative">
+                <span class="ipd-search-icon">🔍</span>
+                <input class="ipd-search-input" id="ipd-search-edit" placeholder="Cari ikon..." oninput="filterIconsEdit(this.value)">
+              </div>
+              <div class="ipd-cats" id="ipd-cats-edit"></div>
+              <div class="ipd-grid" id="ipd-grid-edit"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="mbtn-cancel" style="flex:1;padding:12px;font-size:13px;border-radius:9px" onclick="closeModal('modal-edit')">Batal</button>
+        <button class="mbtn-masuk" style="flex:2;padding:12px;font-size:13px;border-radius:9px;background:linear-gradient(135deg,#1565C0,#003F88)" onclick="simpanEditBarang()">💾 Simpan Perubahan</button>
+      </div>
+      <button onclick="konfirmasiHapusBarang()" style="width:100%;margin-top:8px;padding:10px;background:none;border:1.5px solid #c0392b;color:#c0392b;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer">🗑️ Hapus Barang Ini</button>
     </div>
   </div>
 </div>
