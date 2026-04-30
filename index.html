@@ -123,9 +123,11 @@
 <div class="catbar" id="catbar"><div class="catbar-inner" id="catbar-inner"></div></div>
 
 <div class="toolbar" id="toolbar-el">
-  <div style="display:flex;align-items:center;gap:8px">
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
     <button class="filter-btn" onclick="openBarcodeModal()" style="gap:5px">📷 Scan</button>
     <button class="filter-btn" onclick="toggleFilter()">⚙ Filter</button>
+    <button class="filter-btn" onclick="openImportModal()" style="background:var(--green);color:#fff;border-color:var(--green)">📥 Import</button>
+    <button class="filter-btn" onclick="openResetModal()" style="background:#c0392b;color:#fff;border-color:#c0392b">🗑 Reset Data</button>
     <span class="item-count" id="item-count">— Barang</span>
   </div>
   <div class="sort-right">
@@ -220,6 +222,8 @@
       <span class="export-label">Export:</span>
       <button class="exp-btn excel" onclick="exportRiwayatExcel()">📊 Excel</button>
       <button class="exp-btn pdf" onclick="exportRiwayatPDF()">📄 PDF</button>
+      <span class="export-label" style="margin-left:12px">Import:</span>
+      <button class="exp-btn excel" onclick="openImportTrxModal()" style="background:var(--green);color:#fff;border-color:var(--green)">📥 Import Transaksi</button>
     </div>
     <div class="table-card"><div id="tbl-riwayat"></div></div>
   </div>
@@ -418,6 +422,115 @@
         </div>
       </div>
       <button class="mbtn-masuk" style="width:100%;padding:12px;font-size:13px;border-radius:9px;background:linear-gradient(135deg,#0D7A3E,#064D26)" onclick="simpanBarang()">💾 &nbsp;Simpan Barang</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL IMPORT BARANG ===== -->
+<div class="modal-overlay" id="modal-import">
+  <div class="modal-box" style="max-width:520px">
+    <div class="modal-header">
+      <div class="modal-title">📥 Import Data Barang</div>
+      <button class="modal-close" onclick="closeModal('modal-import')">✕</button>
+    </div>
+    <div style="padding:20px">
+      <div style="background:#f0f7ff;border:1px solid #b3d4f5;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#1a4a7a">
+        <b>Format CSV yang diterima:</b><br>
+        <code style="font-size:11px;color:#333">nama,lokasi,kat,sat,stok,min,emoji</code><br><br>
+        <b>Contoh isi:</b><br>
+        <code style="font-size:11px;color:#333">Kertas A4,Kantor,ATK,rim,25,5,📄<br>Sapu,Halte,Kebersihan,unit,4,2,🧹</code><br><br>
+        <b>Lokasi:</b> Kantor atau Halte<br>
+        <b>Kolom emoji bisa dikosongkan</b> (default 📦)
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Upload file CSV atau Excel (.csv / .xlsx)</label>
+        <input type="file" id="import-barang-file" accept=".csv,.xlsx" onchange="handleImportBarangFile(this.files[0])" style="width:100%;padding:8px;border:1.5px dashed var(--border);border-radius:8px;font-size:13px;cursor:pointer">
+      </div>
+      <div id="import-barang-preview" style="display:none;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Preview data (<span id="import-barang-count">0</span> baris):</div>
+        <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
+          <table style="width:100%;font-size:11px;border-collapse:collapse" id="import-barang-table"></table>
+        </div>
+      </div>
+      <div id="import-barang-error" style="display:none;background:#fff0f0;border:1px solid #fcc;border-radius:8px;padding:10px;font-size:12px;color:#c0392b;margin-bottom:12px"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="mbtn-cancel" onclick="closeModal('modal-import')" style="padding:9px 20px">Batal</button>
+        <button class="mbtn-masuk" id="import-barang-btn" onclick="doImportBarang()" style="padding:9px 20px;opacity:0.4;pointer-events:none">📥 Import Sekarang</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL IMPORT TRANSAKSI ===== -->
+<div class="modal-overlay" id="modal-import-trx">
+  <div class="modal-box" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title">📥 Import Data Transaksi</div>
+      <button class="modal-close" onclick="closeModal('modal-import-trx')">✕</button>
+    </div>
+    <div style="padding:20px">
+      <div style="background:#f0fff4;border:1px solid #b3e8c8;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#1a4a2a">
+        <b>Format CSV yang diterima:</b><br>
+        <code style="font-size:11px;color:#333">nama_barang,tipe,jumlah,tanggal,keterangan,pemohon</code><br><br>
+        <b>Contoh isi:</b><br>
+        <code style="font-size:11px;color:#333">Kertas A4,masuk,10,2025-01-15,Pengadaan bulanan,<br>Pulpen,keluar,5,2025-01-16,Pemakaian harian,Budi</code><br><br>
+        <b>tipe:</b> masuk atau keluar &nbsp;|&nbsp; <b>tanggal:</b> format YYYY-MM-DD<br>
+        <b>nama_barang harus cocok</b> dengan nama di database
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Upload file CSV atau Excel (.csv / .xlsx)</label>
+        <input type="file" id="import-trx-file" accept=".csv,.xlsx" onchange="handleImportTrxFile(this.files[0])" style="width:100%;padding:8px;border:1.5px dashed var(--border);border-radius:8px;font-size:13px;cursor:pointer">
+      </div>
+      <div id="import-trx-preview" style="display:none;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Preview data (<span id="import-trx-count">0</span> baris):</div>
+        <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
+          <table style="width:100%;font-size:11px;border-collapse:collapse" id="import-trx-table"></table>
+        </div>
+      </div>
+      <div id="import-trx-error" style="display:none;background:#fff0f0;border:1px solid #fcc;border-radius:8px;padding:10px;font-size:12px;color:#c0392b;margin-bottom:12px"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="mbtn-cancel" onclick="closeModal('modal-import-trx')" style="padding:9px 20px">Batal</button>
+        <button class="mbtn-masuk" id="import-trx-btn" onclick="doImportTrx()" style="padding:9px 20px;opacity:0.4;pointer-events:none">📥 Import Sekarang</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL RESET DATA ===== -->
+<div class="modal-overlay" id="modal-reset">
+  <div class="modal-box" style="max-width:460px">
+    <div class="modal-header" style="background:#c0392b">
+      <div class="modal-title" style="color:#fff">🗑️ Reset / Hapus Semua Data</div>
+      <button class="modal-close" onclick="closeModal('modal-reset')" style="color:#fff">✕</button>
+    </div>
+    <div style="padding:20px">
+      <div style="background:#fff0f0;border:1px solid #fcc;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#c0392b">
+        ⚠️ <b>Peringatan!</b> Tindakan ini tidak bisa dibatalkan.<br>
+        Data yang dihapus akan hilang permanen dari database.
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:10px">Pilih data yang ingin dihapus:</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:8px">
+          <input type="checkbox" id="reset-transaksi" onchange="checkResetConfirm()" style="width:16px;height:16px;accent-color:#c0392b">
+          <div><div style="font-size:13px;font-weight:600">Semua Transaksi</div><div style="font-size:11px;color:var(--muted)">Riwayat barang masuk & keluar</div></div>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:8px">
+          <input type="checkbox" id="reset-permintaan" onchange="checkResetConfirm()" style="width:16px;height:16px;accent-color:#c0392b">
+          <div><div style="font-size:13px;font-weight:600">Semua Permintaan</div><div style="font-size:11px;color:var(--muted)">Data permintaan pengadaan barang</div></div>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:8px">
+          <input type="checkbox" id="reset-barang" onchange="checkResetConfirm()" style="width:16px;height:16px;accent-color:#c0392b">
+          <div><div style="font-size:13px;font-weight:600">Semua Barang</div><div style="font-size:11px;color:var(--muted)">Master data barang (otomatis hapus transaksi & permintaan juga)</div></div>
+        </label>
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Ketik <b>HAPUS</b> untuk konfirmasi:</label>
+        <input type="text" id="reset-confirm-input" placeholder="Ketik HAPUS di sini..." style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;box-sizing:border-box" oninput="checkResetConfirm()">
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="mbtn-cancel" onclick="closeModal('modal-reset')" style="padding:9px 20px">Batal</button>
+        <button id="reset-confirm-btn" onclick="doResetData()" style="padding:9px 20px;background:#c0392b;color:#fff;border:none;border-radius:9px;font-weight:700;cursor:pointer;opacity:0.4;pointer-events:none;font-size:13px">🗑️ Hapus Sekarang</button>
+      </div>
     </div>
   </div>
 </div>
