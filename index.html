@@ -427,9 +427,9 @@
 </div>
 
 <!-- ===== MODAL IMPORT BARANG ===== -->
-<div class="modal-overlay" id="modal-import">
-  <div class="modal-box" style="max-width:520px">
-    <div class="modal-header">
+<div class="overlay" id="modal-import">
+  <div class="modal" style="max-width:520px;border-radius:16px">
+    <div class="modal-top" style="background:linear-gradient(135deg,#1565C0,#003F88)">
       <div class="modal-title">📥 Import Data Barang</div>
       <button class="modal-close" onclick="closeModal('modal-import')">✕</button>
     </div>
@@ -439,12 +439,11 @@
         <code style="font-size:11px;color:#333">nama,lokasi,kat,sat,stok,min,emoji</code><br><br>
         <b>Contoh isi:</b><br>
         <code style="font-size:11px;color:#333">Kertas A4,Kantor,ATK,rim,25,5,📄<br>Sapu,Halte,Kebersihan,unit,4,2,🧹</code><br><br>
-        <b>Lokasi:</b> Kantor atau Halte<br>
-        <b>Kolom emoji bisa dikosongkan</b> (default 📦)
+        <b>Lokasi:</b> Kantor atau Halte &nbsp;|&nbsp; <b>Kolom emoji bisa dikosongkan</b> (default 📦)
       </div>
       <div style="margin-bottom:14px">
         <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Upload file CSV atau Excel (.csv / .xlsx)</label>
-        <input type="file" id="import-barang-file" accept=".csv,.xlsx" onchange="handleImportBarangFile(this.files[0])" style="width:100%;padding:8px;border:1.5px dashed var(--border);border-radius:8px;font-size:13px;cursor:pointer">
+        <input type="file" id="import-barang-file" accept=".csv,.xlsx" onchange="handleImportBarangFile(this.files[0])" style="width:100%;padding:8px;border:1.5px dashed var(--border);border-radius:8px;font-size:13px;cursor:pointer;box-sizing:border-box">
       </div>
       <div id="import-barang-preview" style="display:none;margin-bottom:14px">
         <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Preview data (<span id="import-barang-count">0</span> baris):</div>
@@ -462,9 +461,9 @@
 </div>
 
 <!-- ===== MODAL IMPORT TRANSAKSI ===== -->
-<div class="modal-overlay" id="modal-import-trx">
-  <div class="modal-box" style="max-width:560px">
-    <div class="modal-header">
+<div class="overlay" id="modal-import-trx">
+  <div class="modal" style="max-width:560px;border-radius:16px">
+    <div class="modal-top" style="background:linear-gradient(135deg,#0D7A3E,#05522a)">
       <div class="modal-title">📥 Import Data Transaksi</div>
       <button class="modal-close" onclick="closeModal('modal-import-trx')">✕</button>
     </div>
@@ -479,7 +478,7 @@
       </div>
       <div style="margin-bottom:14px">
         <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Upload file CSV atau Excel (.csv / .xlsx)</label>
-        <input type="file" id="import-trx-file" accept=".csv,.xlsx" onchange="handleImportTrxFile(this.files[0])" style="width:100%;padding:8px;border:1.5px dashed var(--border);border-radius:8px;font-size:13px;cursor:pointer">
+        <input type="file" id="import-trx-file" accept=".csv,.xlsx" onchange="handleImportTrxFile(this.files[0])" style="width:100%;padding:8px;border:1.5px dashed var(--border);border-radius:8px;font-size:13px;cursor:pointer;box-sizing:border-box">
       </div>
       <div id="import-trx-preview" style="display:none;margin-bottom:14px">
         <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Preview data (<span id="import-trx-count">0</span> baris):</div>
@@ -497,11 +496,11 @@
 </div>
 
 <!-- ===== MODAL RESET DATA ===== -->
-<div class="modal-overlay" id="modal-reset">
-  <div class="modal-box" style="max-width:460px">
-    <div class="modal-header" style="background:#c0392b">
-      <div class="modal-title" style="color:#fff">🗑️ Reset / Hapus Semua Data</div>
-      <button class="modal-close" onclick="closeModal('modal-reset')" style="color:#fff">✕</button>
+<div class="overlay" id="modal-reset">
+  <div class="modal" style="max-width:460px;border-radius:16px">
+    <div class="modal-top" style="background:linear-gradient(135deg,#c0392b,#922b21)">
+      <div class="modal-title">🗑️ Reset / Hapus Semua Data</div>
+      <button class="modal-close" onclick="closeModal('modal-reset')">✕</button>
     </div>
     <div style="padding:20px">
       <div style="background:#fff0f0;border:1px solid #fcc;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#c0392b">
@@ -512,7 +511,7 @@
         <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:10px">Pilih data yang ingin dihapus:</label>
         <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:8px">
           <input type="checkbox" id="reset-transaksi" onchange="checkResetConfirm()" style="width:16px;height:16px;accent-color:#c0392b">
-          <div><div style="font-size:13px;font-weight:600">Semua Transaksi</div><div style="font-size:11px;color:var(--muted)">Riwayat barang masuk & keluar</div></div>
+          <div><div style="font-size:13px;font-weight:600">Semua Transaksi</div><div style="font-size:11px;color:var(--muted)">Riwayat barang masuk &amp; keluar</div></div>
         </label>
         <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:8px">
           <input type="checkbox" id="reset-permintaan" onchange="checkResetConfirm()" style="width:16px;height:16px;accent-color:#c0392b">
@@ -520,7 +519,7 @@
         </label>
         <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:8px">
           <input type="checkbox" id="reset-barang" onchange="checkResetConfirm()" style="width:16px;height:16px;accent-color:#c0392b">
-          <div><div style="font-size:13px;font-weight:600">Semua Barang</div><div style="font-size:11px;color:var(--muted)">Master data barang (otomatis hapus transaksi & permintaan juga)</div></div>
+          <div><div style="font-size:13px;font-weight:600">Semua Barang</div><div style="font-size:11px;color:var(--muted)">Master data barang (otomatis hapus transaksi &amp; permintaan juga)</div></div>
         </label>
       </div>
       <div style="margin-bottom:16px">
