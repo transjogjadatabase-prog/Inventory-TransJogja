@@ -508,8 +508,8 @@ function renderLaporan(){
     return '<tr><td>'+b.emoji+' '+b.nama+'</td>'
       +'<td><span class="tbadge '+b.lokasi.toLowerCase()+'">'+b.lokasi+'</span></td>'
       +'<td>'+b.kat+'</td>'
-      +'<td style="color:var(--green);font-weight:500">'+m+'</td>'
-      +'<td style="color:var(--red);font-weight:500">'+k+'</td>'
+      +'\<td style="color:var(--green);font-weight:500"\>'+(m ? m+' '+b.sat : '0')+'\</td\>'
+      +'\<td style="color:var(--red);font-weight:500"\>'+(k ? k+' '+b.sat : '0')+'\</td\>'
       +'<td style="font-weight:600">'+b.stok+' '+b.sat+'</td>'
       +'<td>Min: '+b.min+'</td>'
       +'<td><span class="tbadge '+st+'">'+statusLabel(st)+'</span></td></tr>';
