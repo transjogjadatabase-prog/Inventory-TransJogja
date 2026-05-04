@@ -198,6 +198,8 @@ function buildCatbar() {
 }
 function setCat(val, el) {
   activeCat = val;
+  currentGridPage = 1;
+  showAll = false;
   document.querySelectorAll('.cat-item').forEach(c=>c.classList.remove('active'));
   el.classList.add('active');
   renderGrid();
@@ -213,12 +215,89 @@ function getFilteredBarang() {
     return true;
   });
 }
+
+function renderPagination(totalItems) {
+  var wrap = document.getElementById('pagination-wrap');
+  if (!wrap) return;
+
+  if (showAll || totalItems <= itemsPerPage) {
+    wrap.innerHTML = totalItems > itemsPerPage
+      ? '<div class="pages"></div><button class="see-more-link" onclick="setShowAll(false)">← Tampilkan Per Halaman</button>'
+      : '';
+    return;
+  }
+
+  var totalPages = Math.ceil(totalItems / itemsPerPage);
+  var p = currentGridPage;
+
+  // Bangun tombol halaman
+  var pages = [];
+  if (totalPages <= 5) {
+    for (var i = 1; i <= totalPages; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (p > 3) pages.push('...');
+    for (var i = Math.max(2, p-1); i <= Math.min(totalPages-1, p+1); i++) pages.push(i);
+    if (p < totalPages - 2) pages.push('...');
+    pages.push(totalPages);
+  }
+
+  var btns = pages.map(pg => {
+    if (pg === '...') return '<span style="color:var(--muted);font-size:13px;line-height:32px;padding:0 4px">…</span>';
+    return '<button class="pg'+(pg===p?' active':'')+'" onclick="gotoGridPage('+pg+')">'+pg+'</button>';
+  }).join('');
+
+  // Tambah tombol prev/next
+  var prev = p > 1 ? '<button class="pg" onclick="gotoGridPage('+(p-1)+')" title="Sebelumnya">‹</button>' : '';
+  var next = p < totalPages ? '<button class="pg" onclick="gotoGridPage('+(p+1)+')" title="Selanjutnya">›</button>' : '';
+
+  wrap.innerHTML =
+    '<div class="pages">' + prev + btns + next + '</div>'
+    + '<button class="see-more-link" onclick="setShowAll(true)">Lihat Semua → <span style="font-size:10px;opacity:.6">('+totalItems+')</span></button>';
+}
+
+function gotoGridPage(n) {
+  var list = getFilteredBarang();
+  var totalPages = Math.ceil(list.length / itemsPerPage);
+  currentGridPage = Math.max(1, Math.min(n, totalPages));
+  renderGrid();
+  // Scroll ke atas grid
+  var g = document.getElementById('page-barang');
+  if (g) g.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function setShowAll(val) {
+  showAll = val;
+  currentGridPage = 1;
+  renderGrid();
+}
+
 function renderGrid() {
   var list = getFilteredBarang();
   document.getElementById('item-count').textContent = list.length + ' BARANG';
   var g = document.getElementById('products-grid');
-  if(!list.length){g.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>Tidak ada barang ditemukan</p></div>';return;}
-  g.innerHTML = list.map((b,i) => {
+  if(!list.length){
+    g.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>Tidak ada barang ditemukan</p></div>';
+    renderPagination(0);
+    return;
+  }
+
+  // Potong list sesuai halaman
+  var displayList;
+  if (showAll) {
+    displayList = list;
+  } else {
+    var start = (currentGridPage - 1) * itemsPerPage;
+    displayList = list.slice(start, start + itemsPerPage);
+  }
+
+  // Reset ke halaman 1 jika halaman saat ini melebihi total
+  var totalPages = Math.ceil(list.length / itemsPerPage);
+  if (!showAll && currentGridPage > totalPages) {
+    currentGridPage = 1;
+    displayList = list.slice(0, itemsPerPage);
+  }
+  g.innerHTML = displayList.map((b,i) => {
     var st  = stockStatus(b);
     var pct = Math.min(100, b.min ? Math.round(b.stok/(b.min*5)*100) : 40);
     var imgSection;
@@ -264,8 +343,9 @@ function renderGrid() {
       +'</div></div></div></div>';
   }).join('');
   updateLowCount();
+  renderPagination(list.length);
 }
-function doSearch(v){searchQ=v;renderGrid();}
+function doSearch(v){ searchQ=v; currentGridPage=1; showAll=false; renderGrid(); }
 
 // =========== QUICK TRX ===========
 function quickTrx(e,id,tipe){e.stopPropagation();openTrxModal(id);}
@@ -544,6 +624,12 @@ function renderRiwayat(){
   }).join('');
   document.getElementById('tbl-riwayat').innerHTML='<table><thead><tr><th>#</th><th>Tanggal</th><th>Barang</th><th>Lokasi</th><th>Tipe</th><th>Jumlah</th><th>Pemohon</th><th>Keterangan</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
+
+// =========== NAV ===========
+// =========== PAGINATION STATE ===========
+var currentGridPage = 1;
+var itemsPerPage    = 12;   // 12 kartu per halaman (4 kolom × 3 baris)
+var showAll         = false;
 
 // =========== NAV ===========
 var curPage='barang';
