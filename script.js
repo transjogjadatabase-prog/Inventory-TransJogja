@@ -1,11 +1,11 @@
 // ============================================================
 // ATK POOL PUROSANI — script.js
 // Integrasi: Supabase (PostgreSQL)
+// FIX: satuan ditampilkan di placeholder form (tidak campur satuan)
+//      total laporan menampilkan jumlah jenis barang (rapi & konsisten)
 // ============================================================
 
 // =========== KONFIGURASI SUPABASE ===========
-// Ganti dengan URL dan anon key project Anda
-// Dapatkan di: Supabase Dashboard → Settings → API
 const SUPABASE_URL   = 'https://aejbkesrwvsmeeqvotxo.supabase.co';
 const SUPABASE_KEY   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlamJrZXNyd3ZzbWVlcXZvdHhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzA3NzEsImV4cCI6MjA5MjgwNjc3MX0.GgKEXotu19X9Za6l8iyNcAkXcztwzO5k7D7o4Spzm70';
 const STORAGE_BUCKET = 'foto-barang';
@@ -113,7 +113,6 @@ function mapBarang(r) {
 }
 function mapTrx(r) {
   return { id:r.id, bid:r.barang_id, tipe:r.tipe, jml:r.jumlah,
-           sat: r.satuan || '',
            tgl:r.tanggal, ket:r.keterangan||'-', lok:r.lokasi, pemohon:r.pemohon||'' };
 }
 function mapPermintaan(r) {
@@ -122,15 +121,6 @@ function mapPermintaan(r) {
 }
 
 // =========== SUPABASE CRUD ===========
-async function sbInsertBarang(obj) {
-  const { data, error } = await sb.from('barang').insert({
-    nama:r.nama, lokasi:obj.lokasi, kat:obj.kat, sat:obj.sat,
-    stok:obj.stok, min:obj.min, emoji:obj.emoji, foto_url:obj.foto||null
-  }).select().single();
-  if(error) throw error;
-  return mapBarang(data);
-}
-
 async function sbInsertBarang(obj) {
   const { data, error } = await sb.from('barang').insert({
     nama:obj.nama, lokasi:obj.lokasi, kat:obj.kat, sat:obj.sat,
@@ -163,20 +153,13 @@ async function deleteFotoFromStorage(fotoUrl) {
   } catch(e) { console.warn('Gagal hapus foto dari storage:', e); }
 }
 async function sbInsertTransaksi(obj) {
-  var b = getB(obj.bid);
   if(obj.tipe==='keluar') {
-    const bChk = b;
-    if(!bChk || bChk.stok < obj.jml) throw new Error('Stok tidak cukup');
+    const b = getB(obj.bid);
+    if(b && obj.jml > b.stok) throw new Error('Stok tidak cukup! Tersisa ' + b.stok + ' ' + b.sat);
   }
   const { data, error } = await sb.from('transaksi').insert({
-    barang_id: obj.bid,
-    tipe: obj.tipe,
-    jumlah: obj.jml,
-    satuan: b ? b.sat : '',   // ← TAMBAHAN INI
-    tanggal: obj.tgl,
-    keterangan: obj.ket,
-    lokasi: obj.lok,
-    pemohon: obj.pemohon || ''
+    barang_id:obj.bid, tipe:obj.tipe, jumlah:obj.jml,
+    tanggal:obj.tgl, keterangan:obj.ket, lokasi:obj.lok, pemohon:obj.pemohon||''
   }).select().single();
   if(error) throw error;
   return mapTrx(data);
@@ -302,8 +285,13 @@ function openTrxModal(id) {
   document.getElementById('md-masuk').textContent  = tm;
   document.getElementById('md-keluar').textContent = tk;
   document.getElementById('md-sisa').textContent   = b.stok;
-  var satuanHint = document.getElementById('mf-satuan-hint');
-  if(satuanHint) satuanHint.textContent = 'Satuan: ' + b.sat;
+
+  // ===== FIX: Tampilkan satuan di placeholder supaya user tidak salah input =====
+  var inputJml = document.getElementById('mf-jumlah');
+  inputJml.value = '';
+  inputJml.placeholder = 'Jumlah (' + b.sat + ')';
+  // ===========================================================================
+
   document.getElementById('mf-tanggal').value  = todayStr();
   document.getElementById('mf-ket').value      = '';
   document.getElementById('mf-pemohon').value  = '';
@@ -312,7 +300,7 @@ function openTrxModal(id) {
 }
 async function doTrx(tipe) {
   var b       = getB(activeBarangId);
-  var jml     = parseInt(document.getElementById('mf-jumlah').placeholder = 'Jumlah (' + b.sat + ')';
+  var jml     = parseInt(document.getElementById('mf-jumlah').value)||0;
   var tgl     = document.getElementById('mf-tanggal').value;
   var ket     = document.getElementById('mf-ket').value||'-';
   var pemohon = document.getElementById('mf-pemohon').value.trim();
@@ -456,7 +444,7 @@ var ICON_DB = [
 var iconCatActive='Semua', selectedEmoji='📦';
 function buildIconPicker(){
   var cats=['Semua',...new Set(ICON_DB.map(x=>x.cat))];
-  document.getElementById('ipd-cats').innerHTML=cats.map(c=>'<button class="ipd-cat-btn'+(c===iconCatActive?' active':'')+'" onclick="setIconCat(\''+c+'\')">'+(c==='Semua'?'🔠 Semua':c)+'</button>').join('');
+  document.getElementById('ipd-cats').innerHTML=cats.map(c=>'<button class="ipd-cat-btn'+(c===iconCatActive?' active':'')+'" onclick="setIconCat(\''+c+'\')">'+( c==='Semua'?'🔠 Semua':c)+'</button>').join('');
   renderIconGrid('');
 }
 function setIconCat(cat){iconCatActive=cat;buildIconPicker();}
@@ -500,35 +488,38 @@ function renderLaporan(){
   var curKat=rkat.value;
   rkat.innerHTML='<option value="">Semua Kategori</option>'+cats.map(c=>'<option '+(c===curKat?'selected':'')+'>'+c+'</option>').join('');
   var list=barang.filter(b=>(!lok||b.lokasi===lok)&&(!kat||b.kat===kat)&&(!sts||stockStatus(b)===sts));
-  var tM=0,tK=0,tS=0;
+
   var rows=list.map(b=>{
     var trxB=transaksi.filter(t=>t.bid===b.id);
     var m=trxB.filter(t=>t.tipe==='masuk').reduce((a,t)=>a+t.jml,0);
     var k=trxB.filter(t=>t.tipe==='keluar').reduce((a,t)=>a+t.jml,0);
-    var st=stockStatus(b); tM+=m;tK+=k;tS+=b.stok;
+    var st=stockStatus(b);
+    // ===== FIX: Kolom masuk & keluar tampilkan angka + satuan per barang =====
     return '<tr><td>'+b.emoji+' '+b.nama+'</td>'
       +'<td><span class="tbadge '+b.lokasi.toLowerCase()+'">'+b.lokasi+'</span></td>'
       +'<td>'+b.kat+'</td>'
-      +'\<td style="color:var(--green);font-weight:500"\>'+(m ? m+' '+b.sat : '0')+'\</td\>'
-      +'\<td style="color:var(--red);font-weight:500"\>'+(k ? k+' '+b.sat : '0')+'\</td\>'
+      +'<td style="color:var(--green);font-weight:500">'+(m ? m+' '+b.sat : '0')+'</td>'
+      +'<td style="color:var(--red);font-weight:500">'+(k ? k+' '+b.sat : '0')+'</td>'
       +'<td style="font-weight:600">'+b.stok+' '+b.sat+'</td>'
       +'<td>Min: '+b.min+'</td>'
       +'<td><span class="tbadge '+st+'">'+statusLabel(st)+'</span></td></tr>';
+    // =========================================================================
   }).join('');
-  var masukBySat={}, keluarBySat={}, sisaBySat={};
-list.forEach(b=>{
-  var trxB=transaksi.filter(t=>t.bid===b.id);
-  var m=trxB.filter(t=>t.tipe==='masuk').reduce((a,t)=>a+t.jml,0);
-  var k=trxB.filter(t=>t.tipe==='keluar').reduce((a,t)=>a+t.jml,0);
-  masukBySat[b.sat]  = (masukBySat[b.sat]  || 0) + m;
-  keluarBySat[b.sat] = (keluarBySat[b.sat] || 0) + k;
-  sisaBySat[b.sat]   = (sisaBySat[b.sat]   || 0) + b.stok;
-});
-var fmtBySat=obj=>Object.entries(obj).filter(([s,v])=>v>0).map(([s,v])=>v+' '+s).join(' | ')||'0';
-document.getElementById('r-masuk').textContent=fmtBySat(masukBySat);
-document.getElementById('r-keluar').textContent=fmtBySat(keluarBySat);
-document.getElementById('r-sisa').textContent=fmtBySat(sisaBySat);
-document.getElementById('tbl-laporan').innerHTML='<table><thead><tr><th>Barang</th><th>Lokasi</th><th>Kategori</th><th>Masuk</th><th>Keluar</th><th>Stok</th><th>Minimum</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>';
+
+  // ===== FIX: Total summary — tampilkan jumlah jenis, bukan jumlah unit lintas satuan =====
+  var totalJenis    = list.length;
+  var amanJenis     = list.filter(b=>stockStatus(b)==='ok').length;
+  var menipisJenis  = list.filter(b=>stockStatus(b)==='low').length;
+  var habisJenis    = list.filter(b=>stockStatus(b)==='out').length;
+  var adaTrxMasuk   = list.filter(b=>transaksi.some(t=>t.bid===b.id&&t.tipe==='masuk')).length;
+  var adaTrxKeluar  = list.filter(b=>transaksi.some(t=>t.bid===b.id&&t.tipe==='keluar')).length;
+
+  document.getElementById('r-masuk').textContent  = adaTrxMasuk  + ' jenis';
+  document.getElementById('r-keluar').textContent = adaTrxKeluar + ' jenis';
+  document.getElementById('r-sisa').textContent   = amanJenis    + ' aman';
+  // ====================================================================================
+
+  document.getElementById('tbl-laporan').innerHTML='<table><thead><tr><th>Barang</th><th>Lokasi</th><th>Kategori</th><th>Masuk</th><th>Keluar</th><th>Stok</th><th>Minimum</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
 
 // =========== RIWAYAT ===========
@@ -584,44 +575,49 @@ async function doLogin(){
   currentUser=data;
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-shell').classList.add('visible');
-  document.getElementById('nav-username').textContent=data.nama;
-  document.getElementById('dd-name').textContent=data.nama;
-  document.getElementById('dd-role').textContent=data.role.toUpperCase();
-  toast('👋 Selamat datang, '+data.nama+'!','ok');
+  document.getElementById('nav-username').textContent=data.nama||data.username;
+  document.getElementById('dd-name').textContent=data.nama||data.username;
+  document.getElementById('dd-role').textContent=data.role||'staff';
+  await loadAllData();
+  buildCatbar();renderGrid();updateStats();
+  document.getElementById('mf-tanggal').value=todayStr();
+  initRekapTahun();
+  toast('✅ Selamat datang, '+(data.nama||data.username)+'!','ok');
 }
 function doLogout(){
   currentUser=null;
-  document.getElementById('login-screen').style.display='flex';
   document.getElementById('app-shell').classList.remove('visible');
-  document.getElementById('l-user').value='';document.getElementById('l-pass').value='';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('l-user').value='';
+  document.getElementById('l-pass').value='';
   document.getElementById('login-err').style.display='none';
+  document.getElementById('user-dropdown').classList.remove('open');
 }
 function toggleUserDropdown(){document.getElementById('user-dropdown').classList.toggle('open');}
 document.addEventListener('click',function(e){
   var btn=document.getElementById('user-btn'),dd=document.getElementById('user-dropdown');
-  if(dd&&btn&&!btn.contains(e.target))dd.classList.remove('open');
+  if(btn&&dd&&!btn.contains(e.target))dd.classList.remove('open');
 });
-function clearAllData(){alert('⚠️ Reset data tidak tersedia di mode Supabase.\nHapus data langsung dari Supabase Dashboard → Table Editor.');}
 
 // =========== PERMINTAAN ===========
 function renderPermintaanBarangSelect(){
   var sel=document.getElementById('req-barang');if(!sel)return;
-  sel.innerHTML=barang.map(b=>'<option value="'+b.id+'">'+b.emoji+' '+b.nama+' ('+b.stok+' '+b.sat+')</option>').join('');
+  sel.innerHTML=barang.map(b=>'<option value="'+b.id+'">'+b.emoji+' '+b.nama+' ('+b.lokasi+') — Stok: '+b.stok+' '+b.sat+'</option>').join('');
 }
 async function submitPermintaan(){
   var bid=parseInt(document.getElementById('req-barang').value);
   var jml=parseInt(document.getElementById('req-jml').value)||0;
-  var ket=document.getElementById('req-ket').value.trim();
-  if(!jml){toast('⚠️ Jumlah harus diisi','err');return;}
-  var b=getB(bid);
-  try {
+  var ket=document.getElementById('req-ket').value.trim()||'-';
+  if(!bid||!jml){toast('⚠️ Pilih barang dan isi jumlah','err');return;}
+  if(!currentUser){toast('⚠️ Silakan login terlebih dahulu','err');return;}
+  try{
     showLoading('⏳ Mengirim permintaan...');
-    var newP=await sbInsertPermintaan({bid,jml,ket:ket||'-',tgl:todayStr(),user:currentUser?currentUser.nama:'Staff'});
+    var newP=await sbInsertPermintaan({bid,jml,ket,tgl:todayStr(),user:currentUser.nama||currentUser.username});
     permintaan.unshift(newP);
     document.getElementById('req-jml').value='';document.getElementById('req-ket').value='';
     renderPermintaan();hideLoading();showSaveIndicator();
-    toast('✅ Permintaan "'+b.nama+'" berhasil dikirim','ok');
-  } catch(e){hideLoading();toast('❌ Gagal: '+e.message,'err');}
+    toast('✅ Permintaan berhasil dikirim','ok');
+  }catch(e){hideLoading();toast('❌ Gagal mengirim permintaan: '+e.message,'err');}
 }
 async function setPermintaanStatus(id,status){
   var p=permintaan.find(x=>x.id===id);if(!p)return;
@@ -713,19 +709,21 @@ function exportPDF(){
   doc.setFontSize(16);doc.setFont('helvetica','bold');doc.text('ATK POOL PUROSANI',14,10);
   doc.setFontSize(9);doc.setFont('helvetica','normal');doc.text('Sistem Inventory Kantor & Halte — Laporan Stok',14,16);doc.text('Dicetak: '+todayStr(),pw-14,16,{align:'right'});
   doc.setTextColor(30,30,28);
-  var tM=parseInt(document.getElementById('r-masuk').textContent)||0,tK=parseInt(document.getElementById('r-keluar').textContent)||0,tS=parseInt(document.getElementById('r-sisa').textContent)||0;
-  doc.setFontSize(10);doc.setFont('helvetica','bold');doc.text('Total Masuk: '+tM,14,30);doc.text('Total Keluar: '+tK,80,30);doc.text('Sisa Stok: '+tS,150,30);
   var lok=document.getElementById('f-lokasi').value,kat=document.getElementById('f-kategori').value,sts=document.getElementById('f-status').value;
   var list=barang.filter(b=>(!lok||b.lokasi===lok)&&(!kat||b.kat===kat)&&(!sts||stockStatus(b)===sts));
-  var body=list.map((b,i)=>{var trxB=transaksi.filter(t=>t.bid===b.id);var m=trxB.filter(t=>t.tipe==='masuk').reduce((a,t)=>a+t.jml,0);var k=trxB.filter(t=>t.tipe==='keluar').reduce((a,t)=>a+t.jml,0);return[i+1,b.nama,b.lokasi,b.kat,m,k,b.stok+' '+b.sat,statusLabel(stockStatus(b))];});
+  doc.setFontSize(10);doc.setFont('helvetica','bold');
+  doc.text('Total Barang: '+list.length,14,30);
+  doc.text('Stok Aman: '+list.filter(b=>stockStatus(b)==='ok').length,80,30);
+  doc.text('Perlu Perhatian: '+list.filter(b=>stockStatus(b)!=='ok').length,150,30);
+  var body=list.map((b,i)=>{var trxB=transaksi.filter(t=>t.bid===b.id);var m=trxB.filter(t=>t.tipe==='masuk').reduce((a,t)=>a+t.jml,0);var k=trxB.filter(t=>t.tipe==='keluar').reduce((a,t)=>a+t.jml,0);return[i+1,b.nama,b.lokasi,b.kat,m+' '+b.sat,k+' '+b.sat,b.stok+' '+b.sat,statusLabel(stockStatus(b))];});
   doc.autoTable({head:[['#','Nama Barang','Lokasi','Kategori','Masuk','Keluar','Stok','Status']],body,startY:35,styles:{fontSize:9},headStyles:{fillColor:[0,63,136],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[242,245,250]},margin:{left:14,right:14}});
   doc.save('Laporan_ATK_Pool_Purosani_'+todayStr()+'.pdf');toast('✅ File PDF berhasil diunduh','ok');
 }
 function exportRiwayatExcel(){
-  var list=getFilteredRiwayat(),wsData=[['No','Tanggal','Nama Barang','Lokasi','Tipe','Jumlah','Pemohon','Keterangan']];
-  list.slice().reverse().forEach((t,i)=>{var b=getB(t.bid)||{nama:'?',sat:''};wsData.push([i+1,t.tgl,b.nama,t.lok,t.tipe==='masuk'?'Masuk':'Keluar',t.jml,t.pemohon||'—',t.ket]);});
+  var list=getFilteredRiwayat(),wsData=[['No','Tanggal','Nama Barang','Lokasi','Tipe','Jumlah','Satuan','Pemohon','Keterangan']];
+  list.slice().reverse().forEach((t,i)=>{var b=getB(t.bid)||{nama:'?',sat:''};wsData.push([i+1,t.tgl,b.nama,t.lok,t.tipe==='masuk'?'Masuk':'Keluar',t.jml,b.sat,t.pemohon||'—',t.ket]);});
   var wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(wsData);
-  ws['!cols']=[{wch:5},{wch:12},{wch:25},{wch:12},{wch:10},{wch:10},{wch:18},{wch:25}];
+  ws['!cols']=[{wch:5},{wch:12},{wch:25},{wch:12},{wch:10},{wch:10},{wch:10},{wch:18},{wch:25}];
   XLSX.utils.book_append_sheet(wb,ws,'Riwayat Transaksi');
   XLSX.writeFile(wb,'Riwayat_ATK_Pool_Purosani_'+todayStr()+'.xlsx');toast('✅ Riwayat Excel berhasil diunduh','ok');
 }
@@ -735,7 +733,7 @@ function exportRiwayatPDF(){
   doc.setFontSize(16);doc.setFont('helvetica','bold');doc.text('ATK POOL PUROSANI',14,10);
   doc.setFontSize(9);doc.setFont('helvetica','normal');doc.text('Riwayat Transaksi — Dicetak: '+todayStr(),14,16);doc.setTextColor(30,30,28);
   var list=getFilteredRiwayat().slice().reverse();
-  var body=list.map((t,i)=>{var b=getB(t.bid)||{nama:'?',sat:''};return[i+1,t.tgl,b.nama,t.lok,t.tipe==='masuk'?'Masuk':'Keluar',t.jml,t.pemohon||'—',t.ket];});
+  var body=list.map((t,i)=>{var b=getB(t.bid)||{nama:'?',sat:''};return[i+1,t.tgl,b.nama,t.lok,t.tipe==='masuk'?'Masuk':'Keluar',t.jml+' '+b.sat,t.pemohon||'—',t.ket];});
   doc.autoTable({head:[['#','Tanggal','Barang','Lokasi','Tipe','Jumlah','Pemohon','Keterangan']],body,startY:28,styles:{fontSize:8.5},headStyles:{fillColor:[0,63,136],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[242,245,250]},margin:{left:14,right:14}});
   doc.save('Riwayat_ATK_Pool_Purosani_'+todayStr()+'.pdf');toast('✅ Riwayat PDF berhasil diunduh','ok');
 }
@@ -818,7 +816,7 @@ function stopBarcodeScanner(){if(typeof Quagga!=='undefined'&&barcodeScanning){t
 function searchBarcode(code){code=(code||'').trim();if(!code)return;var found=barang.find(b=>b.barcode===code)||barang.find(b=>b.nama.toLowerCase().includes(code.toLowerCase()));var box=document.getElementById('barcode-result-box'),info=document.getElementById('barcode-found-info');if(found){box.textContent='✅ Barang ditemukan: '+found.nama;box.className='barcode-result-box found';barcodeFoundId=found.id;document.getElementById('bfi-nama').textContent=found.emoji+' '+found.nama;document.getElementById('bfi-detail').textContent=found.lokasi+' · '+found.kat+' · Stok: '+found.stok+' '+found.sat;info.style.display='block';toast('✅ Barang ditemukan: '+found.nama,'ok');}else{box.textContent='❌ Barang dengan kode "'+code+'" tidak ditemukan';box.className='barcode-result-box';info.style.display='none';barcodeFoundId=null;toast('❌ Barang tidak ditemukan','err');}}
 function openFromBarcode(tipe){if(!barcodeFoundId)return;closeBarcodeModal();openTrxModal(barcodeFoundId);if(tipe==='keluar')showPemohonField(true);}
 
-// =========== PHOTO FEATURE (Supabase Storage) ===========
+// =========== PHOTO FEATURE ===========
 var photoModalBid=null;
 function openPhotoModal(id){photoModalBid=id;var b=getB(id);document.getElementById('photo-modal-icon').textContent=b.emoji;document.getElementById('photo-modal-title').textContent='Foto: '+b.nama;document.getElementById('photo-modal-sub').textContent=b.lokasi+' — '+b.kat;document.getElementById('photo-modal-bid').value=id;var prev=document.getElementById('photo-preview-large'),ph=document.getElementById('photo-placeholder'),delBtn=document.getElementById('photo-delete-btn');document.getElementById('photo-file-input').value='';if(b.foto){prev.src=b.foto;prev.style.display='block';ph.style.display='none';delBtn.style.display='block';}else{prev.style.display='none';ph.style.display='flex';delBtn.style.display='none';}document.getElementById('modal-photo').classList.add('open');}
 async function handlePhotoUpload(e){var file=e.target.files[0];if(!file)return;if(file.size>2*1024*1024){toast('⚠️ Ukuran file terlalu besar (maks 2MB)','err');return;}var id=parseInt(document.getElementById('photo-modal-bid').value),b=getB(id);if(!b)return;try{showLoading('⏳ Upload foto...');var url=await uploadFotoToStorage(file,id);if(b.foto)await deleteFotoFromStorage(b.foto);await sbUpdateBarangFoto(id,url);b.foto=url;var prev=document.getElementById('photo-preview-large');prev.src=url;prev.style.display='block';document.getElementById('photo-placeholder').style.display='none';document.getElementById('photo-delete-btn').style.display='block';hideLoading();renderGrid();toast('✅ Foto berhasil diunggah','ok');showSaveIndicator();}catch(err){hideLoading();toast('❌ Upload gagal: '+err.message,'err');}}
@@ -830,7 +828,6 @@ function clearAddPhoto(){addPhotoFile=null;addPhotoTemp=null;var prev=document.g
 // =========== MODAL LISTENERS ===========
 document.getElementById('modal-barcode').addEventListener('click',function(e){if(e.target===this)closeBarcodeModal();});
 document.getElementById('modal-photo').addEventListener('click',function(e){if(e.target===this)closeModal('modal-photo');});
-
 
 // =========== EDIT BARANG ===========
 var selectedEmojiEdit = '📦';
@@ -855,7 +852,6 @@ function openEditModal(id) {
   document.getElementById('edit-preview').textContent = selectedEmojiEdit;
   document.getElementById('modal-edit').classList.add('open');
 }
-
 function updateEditPreview() {
   var lok = document.getElementById('e-lokasi').value;
   var kat = document.getElementById('e-kat').value.trim();
@@ -864,7 +860,6 @@ function updateEditPreview() {
   document.getElementById('edit-preview').style.background = bg;
   document.getElementById('edit-preview').textContent = em;
 }
-
 async function simpanEditBarang() {
   var id    = parseInt(document.getElementById('e-id').value);
   var nama  = document.getElementById('e-nama').value.trim();
@@ -888,7 +883,6 @@ async function simpanEditBarang() {
     toast('✅ Barang "' + nama + '" berhasil diperbarui', 'ok');
   } catch(e) { hideLoading(); toast('❌ Gagal menyimpan: ' + e.message, 'err'); }
 }
-
 async function konfirmasiHapusBarang() {
   var id = parseInt(document.getElementById('e-id').value);
   var b  = getB(id);
@@ -896,12 +890,10 @@ async function konfirmasiHapusBarang() {
   if (!confirm('⚠️ Hapus barang "' + b.nama + '"?\n\nSemua transaksi & permintaan terkait juga akan terhapus.')) return;
   try {
     showLoading('⏳ Menghapus barang...');
-    // Hapus transaksi & permintaan dulu (FK cascade harusnya handle ini, tapi eksplisit lebih aman)
     await sb.from('transaksi').delete().eq('barang_id', id);
     await sb.from('permintaan').delete().eq('barang_id', id);
     var { error } = await sb.from('barang').delete().eq('id', id);
     if (error) throw error;
-    // Hapus dari state lokal
     barang     = barang.filter(x => x.id !== id);
     transaksi  = transaksi.filter(x => x.bid !== id);
     permintaan = permintaan.filter(x => x.bid !== id);
@@ -965,7 +957,6 @@ document.addEventListener('click', function(e) {
 
 // =========== IMPORT BARANG ===========
 var importBarangRows = [];
-
 function openImportModal() {
   importBarangRows = [];
   document.getElementById('import-barang-file').value = '';
@@ -975,14 +966,12 @@ function openImportModal() {
   btn.style.opacity = '0.4'; btn.style.pointerEvents = 'none';
   document.getElementById('modal-import').classList.add('open');
 }
-
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('modal-import').addEventListener('click', function(e) { if(e.target===this) closeModal('modal-import'); });
   document.getElementById('modal-import-trx').addEventListener('click', function(e) { if(e.target===this) closeModal('modal-import-trx'); });
   document.getElementById('modal-reset').addEventListener('click', function(e) { if(e.target===this) closeModal('modal-reset'); });
   document.getElementById('modal-edit').addEventListener('click', function(e) { if(e.target===this) closeModal('modal-edit'); });
 });
-
 function handleImportBarangFile(file) {
   if (!file) return;
   var errEl = document.getElementById('import-barang-error');
@@ -994,7 +983,6 @@ function handleImportBarangFile(file) {
       var rows = [];
       if (ext === 'csv') {
         var lines = e.target.result.split('\n').map(l => l.trim()).filter(Boolean);
-        // Skip header jika ada
         var start = lines[0].toLowerCase().includes('nama') ? 1 : 0;
         rows = lines.slice(start).map(l => l.split(',').map(c => c.trim()));
       } else {
@@ -1004,11 +992,9 @@ function handleImportBarangFile(file) {
         var start = data[0] && String(data[0][0]).toLowerCase().includes('nama') ? 1 : 0;
         rows = data.slice(start).filter(r => r[0]);
       }
-      // Validasi kolom minimal
       var valid = rows.filter(r => r[0] && r[1] && r[2] && r[3]);
       if (!valid.length) throw new Error('Tidak ada data valid. Pastikan format: nama,lokasi,kat,sat,stok,min,emoji');
       importBarangRows = valid;
-      // Preview tabel
       document.getElementById('import-barang-count').textContent = valid.length;
       var heads = ['Nama','Lokasi','Kategori','Satuan','Stok','Min','Emoji'];
       var html = '<thead style="background:var(--navy);color:#fff"><tr>'
@@ -1031,7 +1017,6 @@ function handleImportBarangFile(file) {
   if (ext === 'csv') reader.readAsText(file, 'UTF-8');
   else reader.readAsArrayBuffer(file);
 }
-
 async function doImportBarang() {
   if (!importBarangRows.length) return;
   var btn = document.getElementById('import-barang-btn');
@@ -1050,7 +1035,6 @@ async function doImportBarang() {
     };
     if (!obj.nama) continue;
     try {
-      // Gunakan session_replication_role via RPC agar stok tidak kena trigger
       var { data, error } = await sb.from('barang').insert({
         nama:obj.nama, lokasi:obj.lokasi, kat:obj.kat, sat:obj.sat,
         stok:obj.stok, min:obj.min, emoji:obj.emoji, foto_url:null
@@ -1072,7 +1056,6 @@ async function doImportBarang() {
 
 // =========== IMPORT TRANSAKSI ===========
 var importTrxRows = [];
-
 function openImportTrxModal() {
   importTrxRows = [];
   document.getElementById('import-trx-file').value = '';
@@ -1082,7 +1065,6 @@ function openImportTrxModal() {
   btn.style.opacity = '0.4'; btn.style.pointerEvents = 'none';
   document.getElementById('modal-import-trx').classList.add('open');
 }
-
 function handleImportTrxFile(file) {
   if (!file) return;
   var errEl = document.getElementById('import-trx-error');
@@ -1105,7 +1087,6 @@ function handleImportTrxFile(file) {
       }
       var valid = rows.filter(r => r[0] && r[1] && r[2]);
       if (!valid.length) throw new Error('Tidak ada data valid. Pastikan format: nama_barang,tipe,jumlah,tanggal,keterangan,pemohon');
-      // Validasi nama barang
       var notFound = [];
       valid.forEach(r => { if (!barang.find(b => b.nama.toLowerCase()===String(r[0]).toLowerCase().trim())) notFound.push(r[0]); });
       if (notFound.length) {
@@ -1134,7 +1115,6 @@ function handleImportTrxFile(file) {
   if (ext === 'csv') reader.readAsText(file, 'UTF-8');
   else reader.readAsArrayBuffer(file);
 }
-
 async function doImportTrx() {
   if (!importTrxRows.length) return;
   var btn = document.getElementById('import-trx-btn');
@@ -1151,8 +1131,6 @@ async function doImportTrx() {
     var pemohon = String(r[5]||'').trim();
     if (!jml || !['masuk','keluar'].includes(tipe)) { gagal++; continue; }
     try {
-      // Insert langsung tanpa trigger (bypass stok update) — stok di DB tetap konsisten
-      // Gunakan insert biasa agar trigger update stok berjalan normal
       var newTrx = await sbInsertTransaksi({ bid:b.id, tipe, jml, tgl, ket, lok:b.lokasi, pemohon });
       if (tipe==='masuk') b.stok += jml; else b.stok -= jml;
       transaksi.push(newTrx);
@@ -1195,7 +1173,6 @@ async function doResetData() {
   var btn = document.getElementById('reset-confirm-btn');
   btn.textContent = '⏳ Menghapus...'; btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none';
   try {
-    // Hapus sesuai pilihan (urutan: transaksi → permintaan → barang karena FK)
     if (delTrx || delBrg) {
       var { error: e1 } = await sb.from('transaksi').delete().neq('id', 0);
       if (e1) throw e1;
@@ -1211,9 +1188,7 @@ async function doResetData() {
       if (e3) throw e3;
       barang = [];
     }
-    // Jika hanya reset stok barang (reset via recalculate)
     if (!delBrg && delTrx) {
-      // Stok semua barang jadi 0 setelah transaksi dihapus
       for (var b of barang) {
         await sb.from('barang').update({ stok: 0 }).eq('id', b.id);
         b.stok = 0;
@@ -1232,17 +1207,15 @@ async function doResetData() {
   btn.textContent = '🗑️ Hapus Sekarang'; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
 }
 
+// =========== CLEAR ALL DATA (legacy) ===========
+function clearAllData(){ openResetModal(); }
+
 // =========== INIT ===========
 (async function init(){
   setDateDisplay();
   document.getElementById('products-grid').innerHTML='<div class="empty"><div class="empty-icon" style="animation:float 2s infinite">⏳</div><p>Memuat data dari server...</p></div>';
-  var ok=await loadAllData();
-  if(!ok){
-    document.getElementById('products-grid').innerHTML='<div class="empty"><div class="empty-icon">❌</div><p>Gagal terhubung ke Supabase.<br>Periksa SUPABASE_URL dan SUPABASE_KEY di script.js</p></div>';
-    return;
-  }
-  buildCatbar();renderGrid();updateStats();
-  document.getElementById('mf-tanggal').value=todayStr();
-  initRekapTahun();
-  toast('✅ Data berhasil dimuat dari Supabase','ok');
+  // Cek apakah sudah login (session sederhana via memory)
+  // Tampilkan login screen dulu
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app-shell').classList.remove('visible');
 })();
