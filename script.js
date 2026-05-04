@@ -163,13 +163,20 @@ async function deleteFotoFromStorage(fotoUrl) {
   } catch(e) { console.warn('Gagal hapus foto dari storage:', e); }
 }
 async function sbInsertTransaksi(obj) {
+  var b = getB(obj.bid);
   if(obj.tipe==='keluar') {
-    const b = getB(obj.bid);
-    if(b && obj.jml > b.stok) throw new Error('Stok tidak cukup! Tersisa ' + b.stok + ' ' + b.sat);
+    const bChk = b;
+    if(!bChk || bChk.stok < obj.jml) throw new Error('Stok tidak cukup');
   }
   const { data, error } = await sb.from('transaksi').insert({
-    barang_id:obj.bid, tipe:obj.tipe, jumlah:obj.jml,
-    tanggal:obj.tgl, keterangan:obj.ket, lokasi:obj.lok, pemohon:obj.pemohon||''
+    barang_id: obj.bid,
+    tipe: obj.tipe,
+    jumlah: obj.jml,
+    satuan: b ? b.sat : '',   // ← TAMBAHAN INI
+    tanggal: obj.tgl,
+    keterangan: obj.ket,
+    lokasi: obj.lok,
+    pemohon: obj.pemohon || ''
   }).select().single();
   if(error) throw error;
   return mapTrx(data);
