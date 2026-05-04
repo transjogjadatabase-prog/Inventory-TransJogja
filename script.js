@@ -514,10 +514,20 @@ function renderLaporan(){
       +'<td>Min: '+b.min+'</td>'
       +'<td><span class="tbadge '+st+'">'+statusLabel(st)+'</span></td></tr>';
   }).join('');
-  document.getElementById('r-masuk').textContent=tM;
-  document.getElementById('r-keluar').textContent=tK;
-  document.getElementById('r-sisa').textContent=tS;
-  document.getElementById('tbl-laporan').innerHTML='<table><thead><tr><th>Barang</th><th>Lokasi</th><th>Kategori</th><th>Masuk</th><th>Keluar</th><th>Stok</th><th>Minimum</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  var masukBySat={}, keluarBySat={}, sisaBySat={};
+list.forEach(b=>{
+  var trxB=transaksi.filter(t=>t.bid===b.id);
+  var m=trxB.filter(t=>t.tipe==='masuk').reduce((a,t)=>a+t.jml,0);
+  var k=trxB.filter(t=>t.tipe==='keluar').reduce((a,t)=>a+t.jml,0);
+  masukBySat[b.sat]  = (masukBySat[b.sat]  || 0) + m;
+  keluarBySat[b.sat] = (keluarBySat[b.sat] || 0) + k;
+  sisaBySat[b.sat]   = (sisaBySat[b.sat]   || 0) + b.stok;
+});
+var fmtBySat=obj=>Object.entries(obj).filter(([s,v])=>v>0).map(([s,v])=>v+' '+s).join(' | ')||'0';
+document.getElementById('r-masuk').textContent=fmtBySat(masukBySat);
+document.getElementById('r-keluar').textContent=fmtBySat(keluarBySat);
+document.getElementById('r-sisa').textContent=fmtBySat(sisaBySat);
+document.getElementById('tbl-laporan').innerHTML='<table><thead><tr><th>Barang</th><th>Lokasi</th><th>Kategori</th><th>Masuk</th><th>Keluar</th><th>Stok</th><th>Minimum</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
 
 // =========== RIWAYAT ===========
