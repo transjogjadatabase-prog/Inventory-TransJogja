@@ -302,7 +302,8 @@ function openTrxModal(id) {
   document.getElementById('md-masuk').textContent  = tm;
   document.getElementById('md-keluar').textContent = tk;
   document.getElementById('md-sisa').textContent   = b.stok;
-  document.getElementById('mf-jumlah').value   = '';
+  var satuanHint = document.getElementById('mf-satuan-hint');
+  if(satuanHint) satuanHint.textContent = 'Satuan: ' + b.sat;
   document.getElementById('mf-tanggal').value  = todayStr();
   document.getElementById('mf-ket').value      = '';
   document.getElementById('mf-pemohon').value  = '';
