@@ -312,7 +312,7 @@ function openTrxModal(id) {
 }
 async function doTrx(tipe) {
   var b       = getB(activeBarangId);
-  var jml     = parseInt(document.getElementById('mf-jumlah').value)||0;
+  var jml     = parseInt(document.getElementById('mf-jumlah').placeholder = 'Jumlah (' + b.sat + ')';
   var tgl     = document.getElementById('mf-tanggal').value;
   var ket     = document.getElementById('mf-ket').value||'-';
   var pemohon = document.getElementById('mf-pemohon').value.trim();
