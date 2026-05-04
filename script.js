@@ -113,6 +113,7 @@ function mapBarang(r) {
 }
 function mapTrx(r) {
   return { id:r.id, bid:r.barang_id, tipe:r.tipe, jml:r.jumlah,
+           sat: r.satuan || '',
            tgl:r.tanggal, ket:r.keterangan||'-', lok:r.lokasi, pemohon:r.pemohon||'' };
 }
 function mapPermintaan(r) {
