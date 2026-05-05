@@ -84,6 +84,7 @@
     <li><a href="#" id="nav-riwayat" onclick="gotoPage('riwayat');return false">🕐 RIWAYAT</a></li>  
     <li><a href="#" id="nav-permintaan" onclick="gotoPage('permintaan');return false">📋 PERMINTAAN</a></li>  
     <li><a href="#" id="nav-users" onclick="gotoPage('users');return false">👥 PENGGUNA</a></li>  
+    <li><a href="#" id="nav-so" onclick="gotoPage('so');return false">📋 STOCK OPNAME</a></li>
   </ul>  
   <div class="nav-right">  
     <button class="nav-icon-btn" onclick="focusSearch()" title="Cari">🔍</button>  
@@ -576,10 +577,280 @@
     </div>  
   </div>  
 </div>
+<!-- ===== PAGE: STOCK OPNAME ===== -->
+<div id="page-so" style="display:none">
+  <div class="page-wrap">
+    <div class="page-header">
+      <div class="page-title">
+        📋 Stock Opname
+        <small>Pencocokan stok fisik vs sistem — dilakukan setiap bulan sekali</small>
+      </div>
+    </div>
 
+    <!-- SO Banner / Info -->
+    <div class="so-banner" id="so-banner">
+      <div class="so-banner-icon">📋</div>
+      <div class="so-banner-body">
+        <div class="so-banner-title" id="so-banner-title">Belum ada SO aktif bulan ini</div>
+        <div class="so-banner-sub" id="so-banner-sub">Mulai Stock Opname untuk mencocokkan stok fisik dengan sistem</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="so-start-btn" id="so-start-btn" onclick="openSoStartModal()">＋ Mulai SO Baru</button>
+        <button class="so-hist-btn" onclick="toggleSoHistory()">📂 Riwayat SO</button>
+      </div>
+    </div>
+
+    <!-- SO Aktif Card -->
+    <div id="so-active-wrap" style="display:none">
+      <!-- Header info SO aktif -->
+      <div class="so-active-header">
+        <div class="so-active-meta">
+          <span class="so-active-period" id="so-active-period">—</span>
+          <span class="so-active-by">oleh <b id="so-active-by">—</b></span>
+        </div>
+        <div class="so-active-progress-wrap">
+          <div class="so-progress-label">
+            <span>Progress pengisian</span>
+            <span id="so-progress-text">0 / 0</span>
+          </div>
+          <div class="so-progress-track">
+            <div class="so-progress-fill" id="so-progress-fill" style="width:0%"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button class="exp-btn excel" onclick="exportSoExcel()">📊 Export Excel</button>
+          <button class="exp-btn pdf"   onclick="exportSoPdf()">📄 Export PDF</button>
+          <button class="so-finish-btn" id="so-finish-btn" onclick="konfirmasiFinishSo()">✅ Selesaikan SO</button>
+          <button class="so-cancel-btn" onclick="konfirmasiBatalSo()">✕ Batalkan SO</button>
+        </div>
+      </div>
+
+      <!-- Filter & Search SO -->
+      <div class="filter-row" style="margin-top:1rem">
+        <span class="filter-row-label">Filter:</span>
+        <select class="f-select" id="so-f-lokasi" onchange="renderSoGrid()">
+          <option value="">Semua Lokasi</option>
+          <option>Kantor</option>
+          <option>Halte</option>
+        </select>
+        <select class="f-select" id="so-f-status" onchange="renderSoGrid()">
+          <option value="">Semua Status</option>
+          <option value="ok">✅ Sudah Diisi</option>
+          <option value="pending">⏳ Belum Diisi</option>
+          <option value="selisih">⚠️ Ada Selisih</option>
+        </select>
+        <div class="sw" style="margin-left:auto">
+          <span class="sw-icon">🔍</span>
+          <input class="search-mini" id="so-search" type="text"
+            placeholder="Cari barang..." oninput="renderSoGrid()">
+        </div>
+      </div>
+
+      <!-- SO Stats Strip -->
+      <div class="so-stats-row" id="so-stats-row">
+        <div class="so-stat-card">
+          <div class="so-stat-num" id="sos-total">0</div>
+          <div class="so-stat-lbl">Total Item</div>
+        </div>
+        <div class="so-stat-card ok">
+          <div class="so-stat-num" id="sos-ok">0</div>
+          <div class="so-stat-lbl">Sudah Diisi</div>
+        </div>
+        <div class="so-stat-card warn">
+          <div class="so-stat-num" id="sos-selisih">0</div>
+          <div class="so-stat-lbl">Ada Selisih</div>
+        </div>
+        <div class="so-stat-card pending">
+          <div class="so-stat-num" id="sos-pending">0</div>
+          <div class="so-stat-lbl">Belum Diisi</div>
+        </div>
+      </div>
+
+      <!-- SO Tabel -->
+      <div class="table-card" style="margin-top:1rem">
+        <div class="table-card-header">
+          <div class="table-card-title">📋 Daftar Pencocokan Stok</div>
+          <span class="so-legend">
+            <span class="so-leg ok">✅ Cocok</span>
+            <span class="so-leg warn">⚠️ Selisih</span>
+            <span class="so-leg pending">⏳ Belum</span>
+          </span>
+        </div>
+        <div id="so-table-wrap" style="overflow-x:auto">
+          <table id="so-table" style="width:100%;border-collapse:collapse">
+            <thead>
+              <tr>
+                <th style="width:40px">#</th>
+                <th>Barang</th>
+                <th>Lokasi</th>
+                <th>Kategori</th>
+                <th style="text-align:center">Stok Sistem</th>
+                <th style="text-align:center">Stok Fisik</th>
+                <th style="text-align:center">Selisih</th>
+                <th>Keterangan</th>
+                <th style="text-align:center">Status</th>
+              </tr>
+            </thead>
+            <tbody id="so-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Riwayat SO -->
+    <div id="so-history-wrap" style="display:none;margin-top:1.5rem">
+      <div class="table-card">
+        <div class="table-card-header">
+          <div class="table-card-title">📂 Riwayat Stock Opname</div>
+          <button class="see-more-link" onclick="toggleSoHistory()">Tutup ✕</button>
+        </div>
+        <div id="so-history-list" style="padding:1rem"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- ===== END PAGE SO ===== -->
+  <!-- ===== MODAL MULAI SO ===== -->
+<div class="overlay" id="modal-so-start">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-top" style="background:linear-gradient(135deg,#0D7A3E,#064D26)">
+      <button class="modal-close" onclick="closeModal('modal-so-start')">✕</button>
+      <div class="modal-ios-icon" style="background:linear-gradient(145deg,#1B9E55,#0D7A3E);font-size:28px;display:flex;align-items:center;justify-content:center">📋</div>
+      <div class="modal-title">Mulai Stock Opname</div>
+      <div class="modal-subtitle">Pencocokan stok fisik vs sistem</div>
+    </div>
+    <div class="modal-content">
+      <div class="so-start-info">
+        <div class="so-info-row">
+          <span class="so-info-icon">📅</span>
+          <div>
+            <div class="so-info-label">Periode</div>
+            <div class="so-info-val" id="so-start-period">—</div>
+          </div>
+        </div>
+        <div class="so-info-row">
+          <span class="so-info-icon">📦</span>
+          <div>
+            <div class="so-info-label">Jumlah item yang akan dicek</div>
+            <div class="so-info-val" id="so-start-count">—</div>
+          </div>
+        </div>
+        <div class="so-info-row">
+          <span class="so-info-icon">👤</span>
+          <div>
+            <div class="so-info-label">Petugas SO</div>
+            <div class="so-info-val" id="so-start-user">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="mf-group" style="margin-bottom:14px">
+        <label class="mf-label">Filter Lokasi (opsional)</label>
+        <select class="mf-select" id="so-start-lokasi" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:inherit">
+          <option value="">Semua Lokasi (Kantor + Halte)</option>
+          <option value="Kantor">Kantor saja</option>
+          <option value="Halte">Halte saja</option>
+        </select>
+      </div>
+      <div class="mf-group" style="margin-bottom:14px">
+        <label class="mf-label">Catatan / Instruksi SO</label>
+        <textarea class="mf-input" id="so-start-catatan" rows="3"
+          placeholder="Contoh: SO rutin bulanan, pastikan hitung fisik sebelum mengisi..."
+          style="width:100%;resize:vertical;min-height:70px;line-height:1.5"></textarea>
+      </div>
+      <div style="background:#f0fff4;border:1px solid #b3e8c8;border-radius:9px;padding:11px 13px;font-size:11.5px;color:#0D7A3E;margin-bottom:16px">
+        💡 <b>Tips:</b> Hitung stok fisik terlebih dahulu sebelum membuka sistem. Isi kolom "Stok Fisik" sesuai hitungan nyata di lapangan. Selisih akan dihitung otomatis.
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="mbtn-cancel" style="flex:1;padding:12px;border-radius:9px" onclick="closeModal('modal-so-start')">Batal</button>
+        <button class="mbtn-masuk" style="flex:2;padding:12px;border-radius:9px;background:linear-gradient(135deg,#0D7A3E,#064D26)" onclick="doStartSo()">📋 Mulai SO Sekarang</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL INPUT STOK FISIK ===== -->
+<div class="overlay" id="modal-so-input">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-top" id="so-input-top" style="background:linear-gradient(135deg,#0D7A3E,#064D26)">
+      <button class="modal-close" onclick="closeModal('modal-so-input')">✕</button>
+      <div class="modal-ios-icon" id="so-input-icon" style="background:linear-gradient(145deg,#1B9E55,#0D7A3E);font-size:26px;display:flex;align-items:center;justify-content:center">📦</div>
+      <div class="modal-title" id="so-input-title">—</div>
+      <div class="modal-subtitle" id="so-input-sub">—</div>
+    </div>
+    <div class="modal-content">
+      <input type="hidden" id="so-input-barang-id">
+
+      <!-- Info stok sistem -->
+      <div class="so-input-sistem">
+        <div class="so-input-sistem-label">Stok di Sistem</div>
+        <div class="so-input-sistem-val" id="so-input-sistem-val">—</div>
+      </div>
+
+      <div class="mf-group" style="margin-bottom:12px">
+        <label class="mf-label">Stok Fisik (hasil hitung nyata) <span style="color:var(--red)">*</span></label>
+        <input class="mf-input" type="number" id="so-input-fisik" min="0"
+          placeholder="Masukkan jumlah fisik..."
+          oninput="updateSoSelisihPreview()"
+          style="font-size:18px;font-weight:700;text-align:center;padding:14px">
+      </div>
+
+      <!-- Preview selisih -->
+      <div class="so-selisih-preview" id="so-selisih-preview" style="display:none">
+        <span class="so-selisih-icon" id="so-selisih-icon">⚠️</span>
+        <div>
+          <div class="so-selisih-label">Selisih</div>
+          <div class="so-selisih-val" id="so-selisih-val">—</div>
+        </div>
+      </div>
+
+      <div class="mf-group" style="margin-bottom:16px">
+        <label class="mf-label">Keterangan (opsional)</label>
+        <input class="mf-input" type="text" id="so-input-ket"
+          placeholder="Penyebab selisih, kondisi barang, dll...">
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button class="mbtn-cancel" style="flex:1;padding:11px;border-radius:9px" onclick="closeModal('modal-so-input')">Batal</button>
+        <button class="mbtn-masuk" style="flex:2;padding:11px;border-radius:9px;background:linear-gradient(135deg,#0D7A3E,#064D26)" onclick="saveSoItem()">💾 Simpan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL KONFIRMASI SELESAI SO ===== -->
+<div class="overlay" id="modal-so-finish">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-top" style="background:linear-gradient(135deg,#1565C0,#003F88)">
+      <button class="modal-close" onclick="closeModal('modal-so-finish')">✕</button>
+      <div class="modal-ios-icon" style="background:linear-gradient(145deg,#1565C0,#003F88);font-size:26px;display:flex;align-items:center;justify-content:center">✅</div>
+      <div class="modal-title">Selesaikan Stock Opname?</div>
+      <div class="modal-subtitle">Ringkasan hasil SO bulan ini</div>
+    </div>
+    <div class="modal-content">
+      <div class="so-finish-summary" id="so-finish-summary"></div>
+      <div style="background:#fffde7;border:1.5px solid #FFD54F;border-radius:9px;padding:10px 13px;margin-bottom:16px;font-size:11.5px;color:#795548">
+        ⚠️ <b>Perhatian:</b> Setelah diselesaikan, stok sistem akan <b>otomatis dikoreksi</b> sesuai stok fisik untuk item yang ada selisih. Riwayat SO akan tersimpan.
+      </div>
+      <div class="mf-group" style="margin-bottom:16px">
+        <label class="mf-label">Koreksi stok otomatis untuk item selisih?</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer">
+          <input type="checkbox" id="so-finish-koreksi" checked style="width:16px;height:16px;accent-color:#0D7A3E">
+          <div>
+            <div style="font-size:13px;font-weight:600">Ya, koreksi stok sistem</div>
+            <div style="font-size:11px;color:var(--muted)">Stok sistem akan diubah sesuai hitungan fisik</div>
+          </div>
+        </label>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="mbtn-cancel" style="flex:1;padding:11px;border-radius:9px" onclick="closeModal('modal-so-finish')">Batal</button>
+        <button class="mbtn-masuk" style="flex:2;padding:11px;border-radius:9px;background:linear-gradient(135deg,#1565C0,#003F88)" onclick="doFinishSo()">✅ Selesaikan & Simpan</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>  
 </div>  
-
 <!-- ===== MODAL EDIT TRANSAKSI ===== -->
 <div class="overlay" id="modal-edit-trx">
   <div class="modal" style="max-width:460px">
