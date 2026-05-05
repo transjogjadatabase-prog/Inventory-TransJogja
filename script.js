@@ -612,7 +612,11 @@ function renderRiwayat(){
     return;
   }
   var rows=list.slice().reverse().map((t,i)=>{
-    var b=getB(t.bid)||{nama:'?',emoji:'?',sat:''};
+    var b=getB(t.bid)||{nama:'?',emoji:'?',sat:'',lokasi:t.lok};
+    // ===== FIX: Gunakan lokasi barang saat ini, bukan lokasi lama di transaksi =====
+    var lokasiTampil = b.lokasi || t.lok || '—';
+    var lokasiClass  = lokasiTampil.toLowerCase();
+    // ==============================================================================
     var pemohonCell='—';
     if(t.tipe==='keluar'&&t.pemohon){
       var initials=t.pemohon.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
@@ -622,7 +626,7 @@ function renderRiwayat(){
       +'<td style="color:var(--muted);font-size:11px">'+(i+1)+'</td>'
       +'<td>'+t.tgl+'</td>'
       +'<td>'+b.emoji+' '+b.nama+'</td>'
-      +'<td><span class="tbadge '+t.lok.toLowerCase()+'">'+t.lok+'</span></td>'
+      +'<td><span class="tbadge '+lokasiClass+'">'+lokasiTampil+'</span></td>'
       +'<td><span class="tbadge '+(t.tipe==='masuk'?'mk':'kl')+'">'+(t.tipe==='masuk'?'📥 Masuk':'📤 Keluar')+'</span></td>'
       +'<td style="font-weight:600;color:'+(t.tipe==='masuk'?'var(--green)':'var(--red)')+'">'+t.jml+' '+b.sat+'</td>'
       +'<td>'+pemohonCell+'</td>'
@@ -952,7 +956,7 @@ function exportPDF(){
 }
 function exportRiwayatExcel(){
   var list=getFilteredRiwayat(),wsData=[['No','Tanggal','Nama Barang','Lokasi','Tipe','Jumlah','Satuan','Pemohon','Keterangan']];
-  list.slice().reverse().forEach((t,i)=>{var b=getB(t.bid)||{nama:'?',sat:''};wsData.push([i+1,t.tgl,b.nama,t.lok,t.tipe==='masuk'?'Masuk':'Keluar',t.jml,b.sat,t.pemohon||'—',t.ket]);});
+  list.slice().reverse().forEach((t,i)=>{var b=getB(t.bid)||{nama:'?',sat:'',lokasi:t.lok};wsData.push([i+1,t.tgl,b.nama,b.lokasi||t.lok,t.tipe==='masuk'?'Masuk':'Keluar',t.jml,b.sat,t.pemohon||'—',t.ket]);});
   var wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(wsData);
   ws['!cols']=[{wch:5},{wch:12},{wch:25},{wch:12},{wch:10},{wch:10},{wch:10},{wch:18},{wch:25}];
   XLSX.utils.book_append_sheet(wb,ws,'Riwayat Transaksi');
@@ -964,7 +968,7 @@ function exportRiwayatPDF(){
   doc.setFontSize(16);doc.setFont('helvetica','bold');doc.text('ATK POOL PUROSANI',14,10);
   doc.setFontSize(9);doc.setFont('helvetica','normal');doc.text('Riwayat Transaksi — Dicetak: '+todayStr(),14,16);doc.setTextColor(30,30,28);
   var list=getFilteredRiwayat().slice().reverse();
-  var body=list.map((t,i)=>{var b=getB(t.bid)||{nama:'?',sat:''};return[i+1,t.tgl,b.nama,t.lok,t.tipe==='masuk'?'Masuk':'Keluar',t.jml+' '+b.sat,t.pemohon||'—',t.ket];});
+  var body=list.map((t,i)=>{var b=getB(t.bid)||{nama:'?',sat:'',lokasi:t.lok};return[i+1,t.tgl,b.nama,b.lokasi||t.lok,t.tipe==='masuk'?'Masuk':'Keluar',t.jml+' '+b.sat,t.pemohon||'—',t.ket];});
   doc.autoTable({head:[['#','Tanggal','Barang','Lokasi','Tipe','Jumlah','Pemohon','Keterangan']],body,startY:28,styles:{fontSize:8.5},headStyles:{fillColor:[0,63,136],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[242,245,250]},margin:{left:14,right:14}});
   doc.save('Riwayat_ATK_Pool_Purosani_'+todayStr()+'.pdf');toast('✅ Riwayat PDF berhasil diunduh','ok');
 }
@@ -972,10 +976,13 @@ function getFilteredRiwayat(){
   var lok=document.getElementById('rh-lokasi').value,dari=document.getElementById('rh-dari').value,sampai=document.getElementById('rh-sampai').value;
   return transaksi.filter(t=>{
     if(rhTab!=='semua'&&t.tipe!==rhTab)return false;
-    if(lok&&t.lok!==lok)return false;
+    // FIX: filter lokasi pakai lokasi barang terkini, bukan t.lok lama
+    var b=getB(t.bid);
+    var lokasiAktif = b ? b.lokasi : t.lok;
+    if(lok && lokasiAktif!==lok)return false;
     if(dari&&t.tgl<dari)return false;
     if(sampai&&t.tgl>sampai)return false;
-    var b=getB(t.bid);if(rhSearch&&b&&!b.nama.toLowerCase().includes(rhSearch.toLowerCase()))return false;
+    if(rhSearch&&b&&!b.nama.toLowerCase().includes(rhSearch.toLowerCase()))return false;
     return true;
   });
 }
@@ -1108,6 +1115,8 @@ async function simpanEditBarang() {
     var b = getB(id);
     b.nama = nama; b.lokasi = lokasi; b.kat = kat;
     b.sat  = sat;  b.stok   = stok;  b.min = min; b.emoji = emoji;
+    // FIX: update t.lok di semua transaksi barang ini agar filter riwayat sinkron
+    transaksi.filter(t=>t.bid===id).forEach(t=>t.lok=lokasi);
     closeModal('modal-edit');
     buildCatbar(); renderGrid(); updateStats();
     hideLoading(); showSaveIndicator();
