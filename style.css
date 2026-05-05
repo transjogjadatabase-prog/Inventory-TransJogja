@@ -454,3 +454,213 @@ tr:hover td{background:#F5F7FC}
 .req-form-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.6rem;margin-bottom:1.4rem;box-shadow:var(--shadow-sm)}
 .user-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.6rem;text-align:center;transition:all .22s;box-shadow:var(--shadow-sm)}
 .user-card:hover{border-color:var(--navy);box-shadow:var(--shadow-lg);transform:translateY(-3px)}
+/* ====== STOCK OPNAME ====== */
+
+/* Banner */
+.so-banner {
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 1.4rem 1.8rem;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: all .25s;
+}
+.so-banner.aktif {
+  background: linear-gradient(135deg,#f0fff4,#e6f5ee);
+  border-color: #b3e8c8;
+}
+.so-banner-icon { font-size: 32px; flex-shrink: 0; }
+.so-banner-body { flex: 1; min-width: 200px; }
+.so-banner-title { font-size: 15px; font-weight: 800; color: var(--text); margin-bottom: 3px; }
+.so-banner-sub   { font-size: 12px; color: var(--muted); }
+
+/* Tombol SO */
+.so-start-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 18px;
+  background: linear-gradient(135deg,#0D7A3E,#064D26);
+  color: #fff; border: none; border-radius: 9px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: inherit; transition: all .2s;
+  box-shadow: 0 4px 12px rgba(13,122,62,.25);
+}
+.so-start-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(13,122,62,.35); }
+
+.so-hist-btn {
+  padding: 9px 16px;
+  background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 9px; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: inherit; color: var(--text2);
+  transition: all .2s;
+}
+.so-hist-btn:hover { border-color: var(--navy); color: var(--navy); }
+
+/* SO Active Header */
+.so-active-header {
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 14px; padding: 1.3rem 1.6rem;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1rem;
+}
+.so-active-meta {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px; flex-wrap: wrap;
+}
+.so-active-period {
+  font-size: 15px; font-weight: 800; color: var(--navy);
+}
+.so-active-by { font-size: 12px; color: var(--muted); }
+
+/* Progress bar */
+.so-active-progress-wrap { margin-bottom: 4px; }
+.so-progress-label {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--muted); font-weight: 600;
+  margin-bottom: 5px;
+}
+.so-progress-track {
+  height: 8px; background: var(--border);
+  border-radius: 99px; overflow: hidden;
+}
+.so-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0D7A3E, #1B9E55);
+  border-radius: 99px;
+  transition: width .5s cubic-bezier(.16,1,.3,1);
+}
+
+/* SO Finish / Cancel buttons */
+.so-finish-btn {
+  padding: 8px 16px; background: linear-gradient(135deg,#1565C0,#003F88);
+  color: #fff; border: none; border-radius: 8px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: inherit; transition: all .2s;
+}
+.so-finish-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,63,136,.3); }
+
+.so-cancel-btn {
+  padding: 8px 14px; background: none;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  font-family: inherit; color: var(--muted); transition: all .2s;
+}
+.so-cancel-btn:hover { border-color: var(--red); color: var(--red); }
+
+/* SO Stats Row */
+.so-stats-row {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem;
+  margin-bottom: .5rem;
+}
+.so-stat-card {
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 1rem 1.2rem;
+  text-align: center; box-shadow: var(--shadow-sm);
+  transition: all .22s;
+}
+.so-stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.so-stat-card.ok   { border-color: #b3e8c8; background: #f0fff4; }
+.so-stat-card.warn { border-color: #FFD54F; background: #fffde7; }
+.so-stat-card.pending { border-color: var(--border2); background: var(--bg); }
+.so-stat-num { font-size: 26px; font-weight: 800; color: var(--navy); line-height: 1; }
+.so-stat-card.ok .so-stat-num   { color: var(--green); }
+.so-stat-card.warn .so-stat-num { color: #C07800; }
+.so-stat-lbl { font-size: 10.5px; color: var(--muted); font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
+
+/* SO Table Row highlights */
+.so-row-selisih { background: #fffde7 !important; }
+.so-row-pending { background: var(--bg) !important; }
+
+/* SO Legend */
+.so-legend { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.so-leg { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px; }
+.so-leg.ok      { background: #e6f5ee; color: var(--green); }
+.so-leg.warn    { background: #fffde7; color: #C07800; }
+.so-leg.pending { background: var(--bg); color: var(--muted); }
+
+/* Tbadge extra */
+.ok-badge   { background: #e6f5ee; color: var(--green); }
+.warn-badge { background: #fffde7; color: #C07800; }
+.pend-badge { background: var(--bg); color: var(--muted); }
+.kantor-badge { background: var(--blue-bg); color: var(--blue); }
+.halte-badge  { background: #fff3e0; color: #E65100; }
+
+/* SO Modal Start Info */
+.so-start-info {
+  background: var(--bg); border-radius: 10px;
+  padding: 12px 14px; margin-bottom: 14px;
+}
+.so-info-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+}
+.so-info-row:last-child { border-bottom: none; }
+.so-info-icon { font-size: 18px; flex-shrink: 0; }
+.so-info-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+.so-info-val { font-size: 13px; font-weight: 700; color: var(--text); margin-top: 2px; }
+
+/* SO Input Sistem */
+.so-input-sistem {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--bg); border-radius: 9px;
+  padding: 10px 14px; margin-bottom: 14px;
+}
+.so-input-sistem-label { font-size: 11px; color: var(--muted); font-weight: 600; }
+.so-input-sistem-val   { font-size: 18px; font-weight: 800; color: var(--navy); }
+
+/* SO Selisih Preview */
+.so-selisih-preview {
+  display: flex; align-items: center; gap: 10px;
+  border-radius: 9px; padding: 10px 14px; margin-bottom: 12px;
+  border: 1.5px solid;
+}
+.so-selisih-preview.ok   { background: #e6f5ee; border-color: #b3e8c8; color: var(--green); }
+.so-selisih-preview.warn { background: #fffde7; border-color: #FFD54F; color: #795548; }
+.so-selisih-icon  { font-size: 22px; }
+.so-selisih-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; opacity: .7; }
+.so-selisih-val   { font-size: 14px; font-weight: 800; margin-top: 1px; }
+
+/* SO Finish Grid */
+.so-finish-grid {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 10px; margin-bottom: 12px;
+}
+.so-finish-item {
+  text-align: center; padding: 10px;
+  border-radius: 10px; border: 1px solid var(--border);
+}
+.so-finish-item.ok      { background: #f0fff4; border-color: #b3e8c8; }
+.so-finish-item.warn    { background: #fffde7; border-color: #FFD54F; }
+.so-finish-item.pending { background: var(--bg); }
+.so-finish-item.total   { background: var(--navy-light); border-color: var(--navy-soft); }
+.so-fi-num { font-size: 22px; font-weight: 800; color: var(--navy); }
+.so-finish-item.ok .so-fi-num   { color: var(--green); }
+.so-finish-item.warn .so-fi-num { color: #C07800; }
+.so-fi-lbl { font-size: 10px; color: var(--muted); font-weight: 600; margin-top: 3px; }
+
+/* SO History */
+.so-hist-item {
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  transition: background .15s;
+}
+.so-hist-item:last-child { border-bottom: none; }
+.so-hist-item:hover { background: var(--bg); }
+.so-hist-period { font-size: 14px; font-weight: 800; color: var(--navy); }
+.so-hist-meta   { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+.so-hist-catatan {
+  font-size: 11px; color: var(--text2); margin-top: 6px;
+  background: var(--bg); border-radius: 6px;
+  padding: 6px 10px; border-left: 3px solid var(--navy-soft);
+}
+
+/* Responsive SO */
+@media (max-width: 640px) {
+  .so-stats-row      { grid-template-columns: repeat(2,1fr); }
+  .so-finish-grid    { grid-template-columns: repeat(2,1fr); }
+  .so-banner         { flex-direction: column; align-items: flex-start; }
+  .so-active-header  { padding: 1rem; }
+}
