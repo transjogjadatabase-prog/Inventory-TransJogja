@@ -1,585 +1,656 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ATK POOL PUROSANI — Sistem Inventory</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="style.css">
-</head>
+<!DOCTYPE html>  
+<html lang="id">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1.0">  
+<title>ATK POOL PUROSANI — Sistem Inventory</title>  
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js"></script>  
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>  
+<script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>  
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  
+<link rel="stylesheet" href="style.css">  
+</head>  
 <body>
 
-<div class="login-screen" id="login-screen">
-  <div class="login-deco"></div><div class="login-deco2"></div>
-  <div class="login-card">
-    <div class="login-header">
-      <div class="login-brand">
-        <div class="login-brand-icon">🗂️</div>
-        <div class="login-brand-text">
-          <div class="login-brand-name">ATK POOL PUROSANI</div>
-          <div class="login-brand-sub">Sistem Inventory Terpadu</div>
-        </div>
-      </div>
-      <div class="login-tagline">Kantor &amp; Halte TransJogja — Yogyakarta</div>
-    </div>
-    <div class="login-body">
-      <div class="login-title">Masuk ke Sistem</div>
-      <div class="login-subtitle">Gunakan kredensial yang diberikan administrator</div>
-      <div class="lf-group">
-        <label class="lf-label">Username</label>
-        <div class="lf-input-wrap">
-          <span class="lf-icon">👤</span>
-          <input class="lf-input" id="l-user" type="text" placeholder="Masukkan username..." autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
-        </div>
-      </div>
-      <div class="lf-group">
-        <label class="lf-label">Password</label>
-        <div class="lf-input-wrap">
-          <span class="lf-icon">🔒</span>
-          <input class="lf-input" id="l-pass" type="password" placeholder="Masukkan password..." autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-        </div>
-      </div>
-      <button class="login-btn" onclick="doLogin()">🔐 &nbsp;MASUK KE SISTEM</button>
-      <div class="login-err" id="login-err">⚠ Username atau password salah. Coba kembali.</div>
-      <div class="login-demo">
-        © 2026 ATK Pool Purosani — TransJogja Yogyakarta | Created : GILANG
-      </div>
-    </div>
-  </div>
+<div class="login-screen" id="login-screen">  
+  <div class="login-deco"></div><div class="login-deco2"></div>  
+  <div class="login-card">  
+    <div class="login-header">  
+      <div class="login-brand">  
+        <div class="login-brand-icon">🗂️</div>  
+        <div class="login-brand-text">  
+          <div class="login-brand-name">ATK POOL PUROSANI</div>  
+          <div class="login-brand-sub">Sistem Inventory Terpadu</div>  
+        </div>  
+      </div>  
+      <div class="login-tagline">Kantor &amp; Halte TransJogja — Yogyakarta</div>  
+    </div>  
+    <div class="login-body">  
+      <div class="login-title">Masuk ke Sistem</div>  
+      <div class="login-subtitle">Gunakan kredensial yang diberikan administrator</div>  
+      <div class="lf-group">  
+        <label class="lf-label">Username</label>  
+        <div class="lf-input-wrap">  
+          <span class="lf-icon">👤</span>  
+          <input class="lf-input" id="l-user" type="text" placeholder="Masukkan username..." autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">  
+        </div>  
+      </div>  
+      <div class="lf-group">  
+        <label class="lf-label">Password</label>  
+        <div class="lf-input-wrap">  
+          <span class="lf-icon">🔒</span>  
+          <input class="lf-input" id="l-pass" type="password" placeholder="Masukkan password..." autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">  
+        </div>  
+      </div>  
+      <button class="login-btn" onclick="doLogin()">🔐 &nbsp;MASUK KE SISTEM</button>  
+      <div class="login-err" id="login-err">⚠ Username atau password salah. Coba kembali.</div>  
+      <div class="login-demo">  
+        © 2026 ATK Pool Purosani — TransJogja Yogyakarta | Created : GILANG  
+      </div>  
+    </div>  
+  </div>  
 </div>
 
 <div class="app-shell" id="app-shell">
 
-<div class="notif-panel" id="notif-panel">
-  <div class="notif-panel-head">
-    <span class="notif-panel-title">🔔 Notifikasi Stok</span>
-    <button class="notif-panel-close" onclick="closeNotifPanel()">✕</button>
-  </div>
-  <div class="notif-list" id="notif-list"></div>
-  <div class="notif-footer">
-    <button class="notif-wa-btn" onclick="sendWANotif()">💬 Kirim via WhatsApp</button>
-    <button class="notif-wa-btn email" onclick="sendEmailNotif()">📧 Kirim via Email</button>
-  </div>
-</div>
+<div class="notif-panel" id="notif-panel">  
+  <div class="notif-panel-head">  
+    <span class="notif-panel-title">🔔 Notifikasi Stok</span>  
+    <button class="notif-panel-close" onclick="closeNotifPanel()">✕</button>  
+  </div>  
+  <div class="notif-list" id="notif-list"></div>  
+  <div class="notif-footer">  
+    <button class="notif-wa-btn" onclick="sendWANotif()">💬 Kirim via WhatsApp</button>  
+    <button class="notif-wa-btn email" onclick="sendEmailNotif()">📧 Kirim via Email</button>  
+  </div>  
+</div>  
 <div class="save-indicator" id="save-indicator">💾 Data tersimpan</div>
 
-<nav class="topnav">
-  <div class="logo" onclick="gotoPage('barang')">
-    <div class="logo-badge">🗂️</div>
-    <div class="logo-text">
-      <div class="logo-main">ATK POOL PUROSANI</div>
-      <div class="logo-sub">Sistem Inventory Terpadu</div>
-    </div>
-  </div>
-  <ul class="nav-menu">
-    <li><a href="#" id="nav-barang" class="active" onclick="gotoPage('barang');return false">📦 DATA BARANG</a></li>
-    <li><a href="#" id="nav-laporan" onclick="gotoPage('laporan');return false">📊 LAPORAN</a></li>
-    <li><a href="#" id="nav-riwayat" onclick="gotoPage('riwayat');return false">🕐 RIWAYAT</a></li>
-    <li><a href="#" id="nav-permintaan" onclick="gotoPage('permintaan');return false">📋 PERMINTAAN</a></li>
-    <li><a href="#" id="nav-users" onclick="gotoPage('users');return false">👥 PENGGUNA</a></li>
-  </ul>
-  <div class="nav-right">
-    <button class="nav-icon-btn" onclick="focusSearch()" title="Cari">🔍</button>
-    <button class="notif-btn" onclick="toggleNotifPanel()">🔔 NOTIF <span class="notif-badge" id="low-count">0</span></button>
-    <button class="topnav-user" onclick="toggleUserDropdown()" id="user-btn">
-      <div class="user-avatar-nav">👤</div>
-      <span class="user-name-nav" id="nav-username">—</span>
-      <span style="color:rgba(255,255,255,.5);font-size:10px">▾</span>
-      <div class="user-dropdown" id="user-dropdown">
-        <div class="ud-header">
-          <div class="ud-header-name" id="dd-name">—</div>
-          <div class="ud-header-role" id="dd-role">—</div>
-        </div>
-        <div class="ud-item">👤 &nbsp;Profil Saya</div>
-        <div class="ud-item">🔑 &nbsp;Ganti Password</div>
-        <div class="ud-divider"></div>
-        <div class="ud-item" onclick="clearAllData()">🗑️ &nbsp;Reset Data</div>
-        <div class="ud-divider"></div>
-        <div class="ud-item danger" onclick="doLogout()">🚪 &nbsp;Keluar</div>
-      </div>
-    </button>
-  </div>
+<nav class="topnav">  
+  <div class="logo" onclick="gotoPage('barang')">  
+    <div class="logo-badge">🗂️</div>  
+    <div class="logo-text">  
+      <div class="logo-main">ATK POOL PUROSANI</div>  
+      <div class="logo-sub">Sistem Inventory Terpadu</div>  
+    </div>  
+  </div>  
+  <ul class="nav-menu">  
+    <li><a href="#" id="nav-barang" class="active" onclick="gotoPage('barang');return false">📦 DATA BARANG</a></li>  
+    <li><a href="#" id="nav-laporan" onclick="gotoPage('laporan');return false">📊 LAPORAN</a></li>  
+    <li><a href="#" id="nav-riwayat" onclick="gotoPage('riwayat');return false">🕐 RIWAYAT</a></li>  
+    <li><a href="#" id="nav-permintaan" onclick="gotoPage('permintaan');return false">📋 PERMINTAAN</a></li>  
+    <li><a href="#" id="nav-users" onclick="gotoPage('users');return false">👥 PENGGUNA</a></li>  
+  </ul>  
+  <div class="nav-right">  
+    <button class="nav-icon-btn" onclick="focusSearch()" title="Cari">🔍</button>  
+    <button class="notif-btn" onclick="toggleNotifPanel()">🔔 NOTIF <span class="notif-badge" id="low-count">0</span></button>  
+    <button class="topnav-user" onclick="toggleUserDropdown()" id="user-btn">  
+      <div class="user-avatar-nav">👤</div>  
+      <span class="user-name-nav" id="nav-username">—</span>  
+      <span style="color:rgba(255,255,255,.5);font-size:10px">▾</span>  
+      <div class="user-dropdown" id="user-dropdown">  
+        <div class="ud-header">  
+          <div class="ud-header-name" id="dd-name">—</div>  
+          <div class="ud-header-role" id="dd-role">—</div>  
+        </div>  
+        <div class="ud-item">👤 &nbsp;Profil Saya</div>  
+        <div class="ud-item">🔑 &nbsp;Ganti Password</div>  
+        <div class="ud-divider"></div>  
+        <div class="ud-item" onclick="clearAllData()">🗑️ &nbsp;Reset Data</div>  
+        <div class="ud-divider"></div>  
+        <div class="ud-item danger" onclick="doLogout()">🚪 &nbsp;Keluar</div>  
+      </div>  
+    </button>  
+  </div>  
 </nav>
 
-<div class="header-strip">
-  <div class="breadcrumb">🏠 Beranda &nbsp;/&nbsp; <span class="bc-cur" id="bc-page">Data Barang</span></div>
-  <div class="date-display" id="date-display"></div>
+<div class="header-strip">  
+  <div class="breadcrumb">🏠 Beranda &nbsp;/&nbsp; <span class="bc-cur" id="bc-page">Data Barang</span></div>  
+  <div class="date-display" id="date-display"></div>  
 </div>
 
-<div class="stats-strip" id="stats-strip">
-  <div class="stat-item"><div class="stat-num" id="stat-total">0</div><div class="stat-lbl">Total Barang</div></div>
-  <div class="stat-item"><div class="stat-num green" id="stat-aman">0</div><div class="stat-lbl">Stok Aman</div></div>
-  <div class="stat-item"><div class="stat-num gold" id="stat-menipis">0</div><div class="stat-lbl">Stok Menipis</div></div>
-  <div class="stat-item"><div class="stat-num red" id="stat-habis">0</div><div class="stat-lbl">Stok Habis</div></div>
+<div class="stats-strip" id="stats-strip">  
+  <div class="stat-item"><div class="stat-num" id="stat-total">0</div><div class="stat-lbl">Total Barang</div></div>  
+  <div class="stat-item"><div class="stat-num green" id="stat-aman">0</div><div class="stat-lbl">Stok Aman</div></div>  
+  <div class="stat-item"><div class="stat-num gold" id="stat-menipis">0</div><div class="stat-lbl">Stok Menipis</div></div>  
+  <div class="stat-item"><div class="stat-num red" id="stat-habis">0</div><div class="stat-lbl">Stok Habis</div></div>  
 </div>
 
 <div class="catbar" id="catbar"><div class="catbar-inner" id="catbar-inner"></div></div>
 
-<div class="toolbar" id="toolbar-el">
-  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-    <button class="filter-btn" onclick="openBarcodeModal()" style="gap:5px">📷 Scan</button>
-    <button class="filter-btn" onclick="toggleFilter()">⚙ Filter</button>
-    <button class="filter-btn" onclick="openImportModal()" style="background:var(--green);color:#fff;border-color:var(--green)">📥 Import</button>
-    <button class="filter-btn" onclick="openResetModal()" style="background:#c0392b;color:#fff;border-color:#c0392b">🗑 Reset Data</button>
-    <span class="item-count" id="item-count">— Barang</span>
-  </div>
-  <div class="sort-right">
-    <div class="sw">
-      <span class="sw-icon">🔍</span>
-      <input class="search-mini" id="search-input" type="text" placeholder="Cari nama atau kategori..." oninput="doSearch(this.value)">
-    </div>
-    <button class="add-btn-top" onclick="openAddModal()">＋ Tambah Barang</button>
-  </div>
+<div class="toolbar" id="toolbar-el">  
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">  
+    <button class="filter-btn" onclick="openBarcodeModal()" style="gap:5px">📷 Scan</button>  
+    <button class="filter-btn" onclick="toggleFilter()">⚙ Filter</button>  
+    <button class="filter-btn" onclick="openImportModal()" style="background:var(--green);color:#fff;border-color:var(--green)">📥 Import</button>  
+    <button class="filter-btn" onclick="openResetModal()" style="background:#c0392b;color:#fff;border-color:#c0392b">🗑 Reset Data</button>  
+    <span class="item-count" id="item-count">— Barang</span>  
+  </div>  
+  <div class="sort-right">  
+    <div class="sw">  
+      <span class="sw-icon">🔍</span>  
+      <input class="search-mini" id="search-input" type="text" placeholder="Cari nama atau kategori..." oninput="doSearch(this.value)">  
+    </div>  
+    <button class="add-btn-top" onclick="openAddModal()">＋ Tambah Barang</button>  
+  </div>  
 </div>
 
-<div id="page-barang">
-  <div class="main">
-    <div class="products-grid" id="products-grid"></div>
-    <div class="pagination-wrap" id="pagination-wrap"></div>
-  </div>
+<div id="page-barang">  
+  <div class="main">  
+    <div class="products-grid" id="products-grid"></div>  
+    <div class="pagination-wrap" id="pagination-wrap"></div>  
+  </div>  
 </div>
 
-<div id="page-laporan" style="display:none">
-  <div class="page-wrap">
-    <div class="page-header"><div class="page-title">Laporan Inventaris<small>Ringkasan stok dan transaksi seluruh barang</small></div></div>
-    <div class="lap-summary">
-      <div class="lap-card masuk"><div class="lap-card-icon">📥</div><div class="lap-num" id="r-masuk">0</div><div class="lap-lbl">Total Masuk</div></div>
-      <div class="lap-card keluar"><div class="lap-card-icon">📤</div><div class="lap-num" id="r-keluar">0</div><div class="lap-lbl">Total Keluar</div></div>
-      <div class="lap-card sisa"><div class="lap-card-icon">📦</div><div class="lap-num" id="r-sisa">0</div><div class="lap-lbl">Sisa Stok</div></div>
-    </div>
-    <div class="filter-row">
-      <span class="filter-row-label">Filter:</span>
-      <select class="f-select" id="f-lokasi" onchange="renderLaporan()"><option value="">Semua Lokasi</option><option>Kantor</option><option>Halte</option></select>
-      <select class="f-select" id="f-kategori" onchange="renderLaporan()"><option value="">Semua Kategori</option></select>
-      <select class="f-select" id="f-status" onchange="renderLaporan()"><option value="">Semua Status</option><option value="ok">Stok Aman</option><option value="low">Stok Menipis</option><option value="out">Stok Habis</option></select>
-    </div>
-    <div class="export-bar">
-      <span class="export-label">Export:</span>
-      <button class="exp-btn excel" onclick="exportExcel()">📊 Excel (.xlsx)</button>
-      <button class="exp-btn pdf" onclick="exportPDF()">📄 PDF Berkop Surat</button>
-      <button class="exp-btn print" onclick="window.print()">🖨️ Cetak</button>
-    </div>
-    <div class="table-card"><div class="table-card-header"><div class="table-card-title">Daftar Stok Barang</div></div><div id="tbl-laporan"></div></div>
-    <div class="chart-section">
-      <div class="chart-head">
-        <div class="chart-head-title">📈 Grafik Tren Stok</div>
-        <div class="chart-tabs">
-          <button class="chart-tab active" onclick="setChartTab('bulanan',this)">Bulanan</button>
-          <button class="chart-tab" onclick="setChartTab('barang',this)">Per Barang</button>
-          <button class="chart-tab" onclick="setChartTab('status',this)">Status Stok</button>
-        </div>
-      </div>
-      <div class="chart-body">
-        <div class="chart-canvas-wrap"><canvas id="main-chart"></canvas></div>
-      </div>
-    </div>
-    <div class="rekap-section">
-      <div class="rekap-head">
-        <div class="rekap-head-title">📅 Rekap Bulanan</div>
-        <div style="display:flex;gap:8px">
-          <select class="f-select" id="rekap-tahun" onchange="renderRekap()" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.2);color:#fff"></select>
-          <select class="f-select" id="rekap-lokasi" onchange="renderRekap()" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.2);color:#fff"><option value="">Semua Lokasi</option><option>Kantor</option><option>Halte</option></select>
-        </div>
-      </div>
-      <div id="tbl-rekap"></div>
-    </div>
-  </div>
+<div id="page-laporan" style="display:none">  
+  <div class="page-wrap">  
+    <div class="page-header"><div class="page-title">Laporan Inventaris<small>Ringkasan stok dan transaksi seluruh barang</small></div></div>  
+    <div class="lap-summary">  
+      <div class="lap-card masuk"><div class="lap-card-icon">📥</div><div class="lap-num" id="r-masuk">0</div><div class="lap-lbl">Total Masuk</div></div>  
+      <div class="lap-card keluar"><div class="lap-card-icon">📤</div><div class="lap-num" id="r-keluar">0</div><div class="lap-lbl">Total Keluar</div></div>  
+      <div class="lap-card sisa"><div class="lap-card-icon">📦</div><div class="lap-num" id="r-sisa">0</div><div class="lap-lbl">Sisa Stok</div></div>  
+    </div>  
+    <div class="filter-row">  
+      <span class="filter-row-label">Filter:</span>  
+      <select class="f-select" id="f-lokasi" onchange="renderLaporan()"><option value="">Semua Lokasi</option><option>Kantor</option><option>Halte</option></select>  
+      <select class="f-select" id="f-kategori" onchange="renderLaporan()"><option value="">Semua Kategori</option></select>  
+      <select class="f-select" id="f-status" onchange="renderLaporan()"><option value="">Semua Status</option><option value="ok">Stok Aman</option><option value="low">Stok Menipis</option><option value="out">Stok Habis</option></select>  
+    </div>  
+    <div class="export-bar">  
+      <span class="export-label">Export:</span>  
+      <button class="exp-btn excel" onclick="exportExcel()">📊 Excel (.xlsx)</button>  
+      <button class="exp-btn pdf" onclick="exportPDF()">📄 PDF Berkop Surat</button>  
+      <button class="exp-btn print" onclick="window.print()">🖨️ Cetak</button>  
+    </div>  
+    <div class="table-card"><div class="table-card-header"><div class="table-card-title">Daftar Stok Barang</div></div><div id="tbl-laporan"></div></div>  
+    <div class="chart-section">  
+      <div class="chart-head">  
+        <div class="chart-head-title">📈 Grafik Tren Stok</div>  
+        <div class="chart-tabs">  
+          <button class="chart-tab active" onclick="setChartTab('bulanan',this)">Bulanan</button>  
+          <button class="chart-tab" onclick="setChartTab('barang',this)">Per Barang</button>  
+          <button class="chart-tab" onclick="setChartTab('status',this)">Status Stok</button>  
+        </div>  
+      </div>  
+      <div class="chart-body">  
+        <div class="chart-canvas-wrap"><canvas id="main-chart"></canvas></div>  
+      </div>  
+    </div>  
+    <div class="rekap-section">  
+      <div class="rekap-head">  
+        <div class="rekap-head-title">📅 Rekap Bulanan</div>  
+        <div style="display:flex;gap:8px">  
+          <select class="f-select" id="rekap-tahun" onchange="renderRekap()" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.2);color:#fff"></select>  
+          <select class="f-select" id="rekap-lokasi" onchange="renderRekap()" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.2);color:#fff"><option value="">Semua Lokasi</option><option>Kantor</option><option>Halte</option></select>  
+        </div>  
+      </div>  
+      <div id="tbl-rekap"></div>  
+    </div>  
+  </div>  
 </div>
 
-<div id="page-riwayat" style="display:none">
-  <div class="page-wrap">
-    <div class="page-header"><div class="page-title">Riwayat Transaksi<small>Log semua aktivitas barang masuk &amp; keluar</small></div></div>
-    <div class="rtabs">
-      <button class="rtab active" onclick="setRtab('semua',this)">Semua</button>
-      <button class="rtab" onclick="setRtab('masuk',this)">📥 Barang Masuk</button>
-      <button class="rtab" onclick="setRtab('keluar',this)">📤 Barang Keluar</button>
-    </div>
-    <div class="filter-row">
-      <span class="filter-row-label">Filter:</span>
-      <select class="f-select" id="rh-lokasi" onchange="renderRiwayat()"><option value="">Semua Lokasi</option><option>Kantor</option><option>Halte</option></select>
-      <input class="f-input" type="text" placeholder="Cari nama barang..." oninput="rhSearch=this.value;renderRiwayat()" style="width:180px">
-      <span class="filter-row-label">Tanggal:</span>
-      <input class="f-input" type="date" id="rh-dari" onchange="renderRiwayat()">
-      <span style="font-size:11px;color:var(--muted)">s/d</span>
-      <input class="f-input" type="date" id="rh-sampai" onchange="renderRiwayat()">
-      <button class="filter-btn" onclick="resetDateFilter()" style="padding:6px 12px;font-size:11px">Reset</button>
-    </div>
-    <div class="export-bar">
-      <span class="export-label">Export:</span>
-      <button class="exp-btn excel" onclick="exportRiwayatExcel()">📊 Excel</button>
-      <button class="exp-btn pdf" onclick="exportRiwayatPDF()">📄 PDF</button>
-      <span class="export-label" style="margin-left:12px">Import:</span>
-      <button class="exp-btn excel" onclick="openImportTrxModal()" style="background:var(--green);color:#fff;border-color:var(--green)">📥 Import Transaksi</button>
-    </div>
-    <div class="table-card"><div id="tbl-riwayat"></div></div>
-  </div>
+<div id="page-riwayat" style="display:none">  
+  <div class="page-wrap">  
+    <div class="page-header"><div class="page-title">Riwayat Transaksi<small>Log semua aktivitas barang masuk &amp; keluar</small></div></div>  
+    <div class="rtabs">  
+      <button class="rtab active" onclick="setRtab('semua',this)">Semua</button>  
+      <button class="rtab" onclick="setRtab('masuk',this)">📥 Barang Masuk</button>  
+      <button class="rtab" onclick="setRtab('keluar',this)">📤 Barang Keluar</button>  
+    </div>  
+    <div class="filter-row">  
+      <span class="filter-row-label">Filter:</span>  
+      <select class="f-select" id="rh-lokasi" onchange="renderRiwayat()"><option value="">Semua Lokasi</option><option>Kantor</option><option>Halte</option></select>  
+      <input class="f-input" type="text" placeholder="Cari nama barang..." oninput="rhSearch=this.value;renderRiwayat()" style="width:180px">  
+      <span class="filter-row-label">Tanggal:</span>  
+      <input class="f-input" type="date" id="rh-dari" onchange="renderRiwayat()">  
+      <span style="font-size:11px;color:var(--muted)">s/d</span>  
+      <input class="f-input" type="date" id="rh-sampai" onchange="renderRiwayat()">  
+      <button class="filter-btn" onclick="resetDateFilter()" style="padding:6px 12px;font-size:11px">Reset</button>  
+    </div>  
+    <div class="export-bar">  
+      <span class="export-label">Export:</span>  
+      <button class="exp-btn excel" onclick="exportRiwayatExcel()">📊 Excel</button>  
+      <button class="exp-btn pdf" onclick="exportRiwayatPDF()">📄 PDF</button>  
+      <span class="export-label" style="margin-left:12px">Import:</span>  
+      <button class="exp-btn excel" onclick="openImportTrxModal()" style="background:var(--green);color:#fff;border-color:var(--green)">📥 Import Transaksi</button>  
+    </div>  
+    <div class="table-card"><div id="tbl-riwayat"></div></div>  
+  </div>  
 </div>
 
-<div id="page-permintaan" style="display:none">
-  <div class="page-wrap">
-    <div class="page-header"><div class="page-title">Permintaan Barang<small>Buat dan kelola permintaan pengadaan barang</small></div></div>
-    <div class="req-form-card">
-      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;gap:8px">
-        <div style="width:32px;height:32px;background:var(--navy);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px">📋</div>
-        Buat Permintaan Baru
-      </div>
-      <div class="req-form-grid">
-        <div class="mf-group"><label class="mf-label">Pilih Barang</label><select class="mf-select" id="req-barang" style="width:100%"></select></div>
-        <div class="mf-group"><label class="mf-label">Jumlah</label><input class="mf-input" type="number" id="req-jml" placeholder="0" min="1" style="width:100%"></div>
-        <div class="mf-group"><label class="mf-label">Keterangan Keperluan</label><input class="mf-input" id="req-ket" placeholder="Tuliskan keperluan..." style="width:100%"></div>
-      </div>
-      <button class="mbtn-masuk" style="padding:10px 24px;border-radius:9px;width:auto" onclick="submitPermintaan()">📨 &nbsp;Kirim Permintaan</button>
-    </div>
-    <div class="table-card"><div class="table-card-header"><div class="table-card-title">Daftar Permintaan</div></div><div id="tbl-permintaan"></div></div>
-  </div>
+<div id="page-permintaan" style="display:none">  
+  <div class="page-wrap">  
+    <div class="page-header"><div class="page-title">Permintaan Barang<small>Buat dan kelola permintaan pengadaan barang</small></div></div>  
+    <div class="req-form-card">  
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;gap:8px">  
+        <div style="width:32px;height:32px;background:var(--navy);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px">📋</div>  
+        Buat Permintaan Baru  
+      </div>  
+      <div class="req-form-grid">  
+        <div class="mf-group"><label class="mf-label">Pilih Barang</label><select class="mf-select" id="req-barang" style="width:100%"></select></div>  
+        <div class="mf-group"><label class="mf-label">Jumlah</label><input class="mf-input" type="number" id="req-jml" placeholder="0" min="1" style="width:100%"></div>  
+        <div class="mf-group"><label class="mf-label">Keterangan Keperluan</label><input class="mf-input" id="req-ket" placeholder="Tuliskan keperluan..." style="width:100%"></div>  
+      </div>  
+      <button class="mbtn-masuk" style="padding:10px 24px;border-radius:9px;width:auto" onclick="submitPermintaan()">📨 &nbsp;Kirim Permintaan</button>  
+    </div>  
+    <div class="table-card"><div class="table-card-header"><div class="table-card-title">Daftar Permintaan</div></div><div id="tbl-permintaan"></div></div>  
+  </div>  
 </div>
 
-<div id="page-users" style="display:none">
-  <div class="page-wrap">
-    <div class="page-header">
-      <div class="page-title">Manajemen Pengguna<small>Kelola akses dan peran pengguna sistem</small></div>
-      <button class="add-btn-top" onclick="toast('Fitur tambah pengguna segera hadir','')">＋ Tambah Pengguna</button>
-    </div>
-    <div class="user-grid" id="user-grid"></div>
-  </div>
+<div id="page-users" style="display:none">  
+  <div class="page-wrap">  
+    <div class="page-header">  
+      <div class="page-title">Manajemen Pengguna<small>Kelola akses dan peran pengguna sistem</small></div>  
+      <button class="add-btn-top" onclick="toast('Fitur tambah pengguna segera hadir','')">＋ Tambah Pengguna</button>  
+    </div>  
+    <div class="user-grid" id="user-grid"></div>  
+  </div>  
 </div>
 
-<footer>
-  <div class="footer-inner">
-    <div class="fc"><div class="fc-icon">📞</div><div class="fc-text">085 xxx xxx xxx</div></div>
-    <div class="fc"><div class="fc-icon">📧</div><div class="fc-text">inventory@atk-purosani.go.id</div></div>
-    <div class="fc"><div class="fc-icon">📍</div><div class="fc-text">Perengkembang, Balecatur, Gamping, Sleman, DIY 55295</div></div>
-  </div>
-  <div class="footer-bottom">
-    <span class="footer-copy">© 2026 ATK Pool Purosani — TransJogja Yogyakarta</span>
-    <div class="footer-links"><a href="#">Kebijakan Privasi</a><a href="#">Ketentuan Layanan</a><a href="#">Bantuan</a></div>
-  </div>
+<footer>  
+  <div class="footer-inner">  
+    <div class="fc"><div class="fc-icon">📞</div><div class="fc-text">085 xxx xxx xxx</div></div>  
+    <div class="fc"><div class="fc-icon">📧</div><div class="fc-text">inventory@atk-purosani.go.id</div></div>  
+    <div class="fc"><div class="fc-icon">📍</div><div class="fc-text">Perengkembang, Balecatur, Gamping, Sleman, DIY 55295</div></div>  
+  </div>  
+  <div class="footer-bottom">  
+    <span class="footer-copy">© 2026 ATK Pool Purosani — TransJogja Yogyakarta</span>  
+    <div class="footer-links"><a href="#">Kebijakan Privasi</a><a href="#">Ketentuan Layanan</a><a href="#">Bantuan</a></div>  
+  </div>  
 </footer>
 
-<!-- BARCODE MODAL -->
-<div class="overlay" id="modal-barcode">
-  <div class="modal barcode-modal">
-    <div class="modal-top" style="background:linear-gradient(135deg,#1a237e,#283593)">
-      <button class="modal-close" onclick="closeBarcodeModal()">✕</button>
-      <div class="modal-ios-icon" style="background:linear-gradient(145deg,#3949AB,#1a237e)">📷</div>
-      <div class="modal-title">Scan Barcode / QR</div>
-      <div class="modal-subtitle">Arahkan kamera ke barcode produk</div>
-    </div>
-    <div class="modal-content">
-      <div id="barcode-video-wrap">
-        <div id="barcode-viewport"></div>
-        <div class="barcode-overlay">
-          <div class="barcode-frame"></div>
-          <div class="barcode-scan-line"></div>
-        </div>
-      </div>
-      <div class="barcode-result-box" id="barcode-result-box">Menunggu deteksi barcode...</div>
-      <div class="barcode-manual-row">
-        <input class="mf-input" type="text" id="barcode-manual-input" placeholder="Atau ketik kode barcode manual..." style="flex:1" onkeydown="if(event.key==='Enter')searchBarcode(this.value)">
-        <button class="mbtn-masuk" style="white-space:nowrap;padding:9px 14px" onclick="searchBarcode(document.getElementById('barcode-manual-input').value)">🔍 Cari</button>
-      </div>
-      <div id="barcode-found-info" style="display:none;background:var(--green-bg);border:1.5px solid #B2DFCC;border-radius:10px;padding:12px 14px;margin-bottom:10px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px" id="bfi-nama">—</div>
-        <div style="font-size:11px;color:var(--muted)" id="bfi-detail">—</div>
-        <div style="display:flex;gap:6px;margin-top:10px">
-          <button class="mbtn-masuk" style="flex:1;padding:8px" onclick="openFromBarcode('masuk')">📥 Catat Masuk</button>
-          <button class="mbtn-keluar" style="flex:1;padding:8px" onclick="openFromBarcode('keluar')">📤 Catat Keluar</button>
-        </div>
-      </div>
-    </div>
-  </div>
+<!-- BARCODE MODAL \-->  
+<div class="overlay" id="modal-barcode">  
+  <div class="modal barcode-modal">  
+    <div class="modal-top" style="background:linear-gradient(135deg,#1a237e,#283593)">  
+      <button class="modal-close" onclick="closeBarcodeModal()">✕</button>  
+      <div class="modal-ios-icon" style="background:linear-gradient(145deg,#3949AB,#1a237e)">📷</div>  
+      <div class="modal-title">Scan Barcode / QR</div>  
+      <div class="modal-subtitle">Arahkan kamera ke barcode produk</div>  
+    </div>  
+    <div class="modal-content">  
+      <div id="barcode-video-wrap">  
+        <div id="barcode-viewport"></div>  
+        <div class="barcode-overlay">  
+          <div class="barcode-frame"></div>  
+          <div class="barcode-scan-line"></div>  
+        </div>  
+      </div>  
+      <div class="barcode-result-box" id="barcode-result-box">Menunggu deteksi barcode...</div>  
+      <div class="barcode-manual-row">  
+        <input class="mf-input" type="text" id="barcode-manual-input" placeholder="Atau ketik kode barcode manual..." style="flex:1" onkeydown="if(event.key==='Enter')searchBarcode(this.value)">  
+        <button class="mbtn-masuk" style="white-space:nowrap;padding:9px 14px" onclick="searchBarcode(document.getElementById('barcode-manual-input').value)">🔍 Cari</button>  
+      </div>  
+      <div id="barcode-found-info" style="display:none;background:var(--green-bg);border:1.5px solid #B2DFCC;border-radius:10px;padding:12px 14px;margin-bottom:10px">  
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px" id="bfi-nama">—</div>  
+        <div style="font-size:11px;color:var(--muted)" id="bfi-detail">—</div>  
+        <div style="display:flex;gap:6px;margin-top:10px">  
+          <button class="mbtn-masuk" style="flex:1;padding:8px" onclick="openFromBarcode('masuk')">📥 Catat Masuk</button>  
+          <button class="mbtn-keluar" style="flex:1;padding:8px" onclick="openFromBarcode('keluar')">📤 Catat Keluar</button>  
+        </div>  
+      </div>  
+    </div>  
+  </div>  
 </div>
 
-<!-- PHOTO MODAL -->
-<div class="overlay" id="modal-photo">
-  <div class="modal" style="max-width:420px">
-    <div class="modal-top" style="background:linear-gradient(135deg,#4527A0,#311B92)">
-      <button class="modal-close" onclick="closeModal('modal-photo')">✕</button>
-      <div class="modal-ios-icon" style="background:linear-gradient(145deg,#673AB7,#4527A0)" id="photo-modal-icon">📷</div>
-      <div class="modal-title" id="photo-modal-title">Foto Barang</div>
-      <div class="modal-subtitle" id="photo-modal-sub">Upload foto untuk identifikasi visual</div>
-    </div>
-    <div class="modal-content">
-      <img id="photo-preview-large" class="modal-photo-preview" src="" alt="Foto Barang">
-      <div class="modal-photo-placeholder" id="photo-placeholder" onclick="document.getElementById('photo-file-input').click()">
-        <span style="font-size:28px">🖼️</span>
-        <span>Klik untuk pilih foto</span>
-        <span style="font-size:10px">JPG, PNG, WebP — maks 2MB</span>
-      </div>
-      <input type="file" id="photo-file-input" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
-      <div class="photo-action-row">
-        <button class="photo-btn upload" onclick="document.getElementById('photo-file-input').click()">📁 Pilih File</button>
-        <button class="photo-btn upload" onclick="openCameraCapture()">📷 Ambil Foto</button>
-        <button class="photo-btn delete" id="photo-delete-btn" onclick="deletePhoto()" style="display:none">🗑 Hapus</button>
-      </div>
-      <input type="hidden" id="photo-modal-bid">
-    </div>
-  </div>
+<!-- PHOTO MODAL \-->  
+<div class="overlay" id="modal-photo">  
+  <div class="modal" style="max-width:420px">  
+    <div class="modal-top" style="background:linear-gradient(135deg,#4527A0,#311B92)">  
+      <button class="modal-close" onclick="closeModal('modal-photo')">✕</button>  
+      <div class="modal-ios-icon" style="background:linear-gradient(145deg,#673AB7,#4527A0)" id="photo-modal-icon">📷</div>  
+      <div class="modal-title" id="photo-modal-title">Foto Barang</div>  
+      <div class="modal-subtitle" id="photo-modal-sub">Upload foto untuk identifikasi visual</div>  
+    </div>  
+    <div class="modal-content">  
+      <img id="photo-preview-large" class="modal-photo-preview" src="" alt="Foto Barang">  
+      <div class="modal-photo-placeholder" id="photo-placeholder" onclick="document.getElementById('photo-file-input').click()">  
+        <span style="font-size:28px">🖼️</span>  
+        <span>Klik untuk pilih foto</span>  
+        <span style="font-size:10px">JPG, PNG, WebP — maks 2MB</span>  
+      </div>  
+      <input type="file" id="photo-file-input" accept="image/\*" style="display:none" onchange="handlePhotoUpload(event)">  
+      <div class="photo-action-row">  
+        <button class="photo-btn upload" onclick="document.getElementById('photo-file-input').click()">📁 Pilih File</button>  
+        <button class="photo-btn upload" onclick="openCameraCapture()">📷 Ambil Foto</button>  
+        <button class="photo-btn delete" id="photo-delete-btn" onclick="deletePhoto()" style="display:none">🗑 Hapus</button>  
+      </div>  
+      <input type="hidden" id="photo-modal-bid">  
+    </div>  
+  </div>  
 </div>
 
-<div class="overlay" id="modal-trx">
-  <div class="modal">
-    <div class="modal-top" id="modal-top-trx" style="background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%)">
-      <button class="modal-close" onclick="closeModal('modal-trx')">✕</button>
-      <div class="modal-ios-icon" id="mimg">📄</div>
-      <div class="modal-title" id="mtitle">—</div>
-      <div class="modal-subtitle" id="mcat">—</div>
-    </div>
-    <div class="modal-content">
-      <div class="modal-stats">
-        <div class="mstat masuk"><div class="mstat-num" id="md-masuk">0</div><div class="mstat-lbl">Total Masuk</div></div>
-        <div class="mstat keluar"><div class="mstat-num" id="md-keluar">0</div><div class="mstat-lbl">Total Keluar</div></div>
-        <div class="mstat sisa"><div class="mstat-num" id="md-sisa">0</div><div class="mstat-lbl">Sisa Stok</div></div>
-      </div>
-      <div class="modal-form-row">
+<div class="overlay" id="modal-trx">  
+  <div class="modal">  
+    <div class="modal-top" id="modal-top-trx" style="background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%)">  
+      <button class="modal-close" onclick="closeModal('modal-trx')">✕</button>  
+      <div class="modal-ios-icon" id="mimg">📄</div>  
+      <div class="modal-title" id="mtitle">—</div>  
+      <div class="modal-subtitle" id="mcat">—</div>  
+    </div>  
+    <div class="modal-content">  
+      <div class="modal-stats">  
+        <div class="mstat masuk"><div class="mstat-num" id="md-masuk">0</div><div class="mstat-lbl">Total Masuk</div></div>  
+        <div class="mstat keluar"><div class="mstat-num" id="md-keluar">0</div><div class="mstat-lbl">Total Keluar</div></div>  
+        <div class="mstat sisa"><div class="mstat-num" id="md-sisa">0</div><div class="mstat-lbl">Sisa Stok</div></div>  
+      </div>  
+      <div class="modal-form-row">  
         <div class="mf-group"><label class="mf-label">Jumlah</label><input class="mf-input" type="number" id="mf-jumlah" min="1" placeholder="0"></div>
-        <input class="mf-input" id="mf-jumlah" type="number" min="1" placeholder="0">
-        <span id="mf-satuan-hint" style="font-size:12px;color:var(--navy);font-weight:700;margin-top:4px;display:block"></span>
-        <div class="mf-group"><label class="mf-label">Tanggal</label><input class="mf-input" type="date" id="mf-tanggal"></div>
+        <div class="mf-group"><label class="mf-label">Tanggal</label><input class="mf-input" type="date" id="mf-tanggal"></div>  
+      </div>  
+      <div class="mf-group"><label class="mf-label">Keterangan</label><input class="mf-input" type="text" id="mf-ket" placeholder="Sumber / tujuan pemakaian..."></div>  
+      <div class="mf-group" id="mf-pemohon-group" style="display:none">  
+        <label class="mf-label">Pemohon <span style="color:var(--muted);font-weight:400;font-size:9px">(wajib untuk barang keluar)</span></label>  
+        <input class="mf-input" type="text" id="mf-pemohon" placeholder="Nama pemohon / bagian...">  
+        <div class="pemohon-quick-btns" id="pemohon-qbtns">  
+          <button type="button" class="pemohon-qbtn" onclick="setPemohon('Operasional')">Operasional</button>  
+          <button type="button" class="pemohon-qbtn" onclick="setPemohon('Administrasi')">Administrasi</button>  
+          <button type="button" class="pemohon-qbtn" onclick="setPemohon('Teknik')">Teknik</button>  
+          <button type="button" class="pemohon-qbtn" onclick="setPemohon('Keuangan')">Keuangan</button>  
+          <button type="button" class="pemohon-qbtn" onclick="setPemohon('Umum')">Umum</button>  
+        </div>  
+      </div>  
+      <div class="modal-btns">  
+        <button class="mbtn-masuk" id="mbtn-masuk-btn" onmouseenter="showPemohonField(false)" onclick="doTrx('masuk')">📥 Catat Masuk</button>  
+        <button class="mbtn-keluar" id="mbtn-keluar-btn" onmouseenter="showPemohonField(true)" onclick="doTrx('keluar')">📤 Catat Keluar</button>  
+      </div>  
+    </div>  
+  </div>  
+</div>
+
+<div class="overlay" id="modal-add">  
+  <div class="modal add-modal">  
+    <div class="modal-top" style="background:linear-gradient(135deg,#0D7A3E,#064D26)">  
+      <button class="modal-close" onclick="closeModal('modal-add')">✕</button>  
+      <div class="modal-ios-icon" id="add-preview" style="background:linear-gradient(145deg,#43A047,#1B5E20)">📦</div>  
+      <div class="modal-title">Tambah Barang Baru</div>  
+      <div class="modal-subtitle">Isi data lengkap barang yang akan ditambahkan</div>  
+    </div>  
+    <div class="modal-content">  
+      <div class="add-form-grid">  
+        <div class="mf-group"><label class="mf-label">Nama Barang</label><input class="mf-input" id="a-nama" placeholder="Nama barang..."></div>  
+        <div class="mf-group"><label class="mf-label">Lokasi</label><select class="mf-select" id="a-lokasi" onchange="updateAddPreview()"><option>Kantor</option><option>Halte</option></select></div>  
+      </div>  
+      <div class="add-form-grid triple">  
+        <div class="mf-group"><label class="mf-label">Kategori</label><input class="mf-input" id="a-kat" placeholder="ATK, Elektronik..."></div>  
+        <div class="mf-group"><label class="mf-label">Satuan</label><input class="mf-input" id="a-sat" placeholder="pcs, unit..."></div>  
+        <div class="mf-group"><label class="mf-label">Stok Awal</label><input class="mf-input" type="number" id="a-stok" placeholder="0" min="0"></div>  
+      </div>  
+      <div class="add-form-grid">  
+        <div class="mf-group"><label class="mf-label">Stok Minimum</label><input class="mf-input" type="number" id="a-min" value="5" min="0"></div>  
+        <div class="mf-group"><label class="mf-label">Ikon Barang</label>  
+          <div class="icon-picker-wrap" id="icon-picker-wrap">  
+            <button type="button" class="icon-picker-trigger" id="icon-picker-trigger" onclick="toggleIconPicker()">  
+              <span class="ipt-emoji" id="ipt-emoji-preview">📦</span>  
+              <span class="ipt-name" id="ipt-name-preview">Kardus / Umum</span>  
+              <span class="ipt-arrow">▾</span>  
+            </button>  
+            <input type="hidden" id="a-emoji" value="📦">  
+            <div class="icon-picker-dropdown" id="icon-picker-dropdown">  
+              <div class="ipd-search" style="position:relative">  
+                <span class="ipd-search-icon">🔍</span>  
+                <input class="ipd-search-input" id="ipd-search" placeholder="Cari ikon..." oninput="filterIcons(this.value)">  
+              </div>  
+              <div class="ipd-cats" id="ipd-cats"></div>  
+              <div class="ipd-grid" id="ipd-grid"></div>  
+            </div>  
+          </div>  
+        </div>  
+      </div>  
+      <div class="modal-photo-section">  
+        <div class="mf-label" style="margin-bottom:6px">Foto Barang <span style="color:var(--muted);font-weight:400;font-size:9px">(opsional)</span></div>  
+        <img id="add-photo-preview" class="modal-photo-preview" src="" alt="">  
+        <div class="modal-photo-placeholder" id="add-photo-placeholder" onclick="document.getElementById('add-photo-input').click()">  
+          <span style="font-size:22px">📷</span>  
+          <span>Klik untuk upload foto</span>  
+        </div>  
+        <input type="file" id="add-photo-input" accept="image/\*" style="display:none" onchange="handleAddPhoto(event)">  
+        <div class="photo-action-row" id="add-photo-actions" style="display:none">  
+          <button class="photo-btn upload" onclick="document.getElementById('add-photo-input').click()">📁 Ganti</button>  
+          <button class="photo-btn delete" onclick="clearAddPhoto()">🗑 Hapus</button>  
+        </div>  
+      </div>  
+      <button class="mbtn-masuk" style="width:100%;padding:12px;font-size:13px;border-radius:9px;background:linear-gradient(135deg,#0D7A3E,#064D26)" onclick="simpanBarang()">💾 &nbsp;Simpan Barang</button>  
+    </div>  
+  </div>  
+</div>
+
+<!-- \===== MODAL EDIT BARANG \===== \-->  
+<div class="overlay" id="modal-edit">  
+  <div class="modal add-modal">  
+    <div class="modal-top" style="background:linear-gradient(135deg,#1565C0,#003F88)">  
+      <button class="modal-close" onclick="closeModal('modal-edit')">✕</button>  
+      <div class="modal-ios-icon" id="edit-preview" style="background:linear-gradient(145deg,#4A90E2,#1565C0)">📦</div>  
+      <div class="modal-title">Edit Barang</div>  
+      <div class="modal-subtitle">Ubah data barang yang sudah ada</div>  
+    </div>  
+    <div class="modal-content">  
+      <input type="hidden" id="e-id">  
+      <div class="add-form-grid">  
+        <div class="mf-group"><label class="mf-label">Nama Barang</label><input class="mf-input" id="e-nama" placeholder="Nama barang..."></div>  
+        <div class="mf-group"><label class="mf-label">Lokasi</label><select class="mf-select" id="e-lokasi" onchange="updateEditPreview()"><option>Kantor</option><option>Halte</option></select></div>  
+      </div>  
+      <div class="add-form-grid triple">  
+        <div class="mf-group"><label class="mf-label">Kategori</label><input class="mf-input" id="e-kat" placeholder="ATK, Elektronik..."></div>  
+        <div class="mf-group"><label class="mf-label">Satuan</label><input class="mf-input" id="e-sat" placeholder="pcs, unit..."></div>  
+        <div class="mf-group"><label class="mf-label">Stok Saat Ini</label><input class="mf-input" type="number" id="e-stok" min="0"></div>  
+      </div>  
+      <div class="add-form-grid">  
+        <div class="mf-group"><label class="mf-label">Stok Minimum</label><input class="mf-input" type="number" id="e-min" value="5" min="0"></div>  
+        <div class="mf-group"><label class="mf-label">Ikon Barang</label>  
+          <div class="icon-picker-wrap" id="icon-picker-wrap-edit">  
+            <button type="button" class="icon-picker-trigger" id="icon-picker-trigger-edit" onclick="toggleIconPickerEdit()">  
+              <span class="ipt-emoji" id="ipt-emoji-preview-edit">📦</span>  
+              <span class="ipt-name" id="ipt-name-preview-edit">Kardus / Umum</span>  
+              <span class="ipt-arrow">▾</span>  
+            </button>  
+            <input type="hidden" id="e-emoji" value="📦">  
+            <div class="icon-picker-dropdown" id="icon-picker-dropdown-edit">  
+              <div class="ipd-search" style="position:relative">  
+                <span class="ipd-search-icon">🔍</span>  
+                <input class="ipd-search-input" id="ipd-search-edit" placeholder="Cari ikon..." oninput="filterIconsEdit(this.value)">  
+              </div>  
+              <div class="ipd-cats" id="ipd-cats-edit"></div>  
+              <div class="ipd-grid" id="ipd-grid-edit"></div>  
+            </div>  
+          </div>  
+        </div>  
+      </div>  
+      <div style="display:flex;gap:10px;margin-top:16px">  
+        <button class="mbtn-cancel" style="flex:1;padding:12px;font-size:13px;border-radius:9px" onclick="closeModal('modal-edit')">Batal</button>  
+        <button class="mbtn-masuk" style="flex:2;padding:12px;font-size:13px;border-radius:9px;background:linear-gradient(135deg,#1565C0,#003F88)" onclick="simpanEditBarang()">💾 Simpan Perubahan</button>  
+      </div>  
+      <button onclick="konfirmasiHapusBarang()" style="width:100%;margin-top:8px;padding:10px;background:none;border:1.5px solid #c0392b;color:#c0392b;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer">🗑️ Hapus Barang Ini</button>  
+    </div>  
+  </div>  
+</div>
+
+<!-- \===== MODAL IMPORT BARANG \===== \-->  
+<div class="overlay" id="modal-import">  
+  <div class="modal" style="max-width:520px;border-radius:16px">  
+    <div class="modal-top" style="background:linear-gradient(135deg,#1565C0,#003F88)">  
+      <div class="modal-title">📥 Import Data Barang</div>  
+      <button class="modal-close" onclick="closeModal('modal-import')">✕</button>  
+    </div>  
+    <div style="padding:20px">  
+      <div style="background:#f0f7ff;border:1px solid #b3d4f5;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#1a4a7a">  
+        <b>Format CSV yang diterima:</b><br>  
+        <code style="font-size:11px;color:#333">nama,lokasi,kat,sat,stok,min,emoji</code><br><br>  
+        <b>Contoh isi:</b><br>  
+        <code style="font-size:11px;color:#333">Kertas A4,Kantor,ATK,rim,25,5,📄<br>Sapu,Halte,Kebersihan,unit,4,2,🧹</code><br><br>  
+        <b>Lokasi:</b> Kantor atau Halte &nbsp;|&nbsp; <b>Kolom emoji bisa dikosongkan</b> (default 📦)  
+      </div>  
+      <div style="margin-bottom:14px">  
+        <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Upload file CSV atau Excel (.csv / .xlsx)</label>  
+        <input type="file" id="import-barang-file" accept=".csv,.xlsx" onchange="handleImportBarangFile(this.files[0])" style="width:100%;padding:8px;border:1.5px dashed var(--border);border-radius:8px;font-size:13px;cursor:pointer;box-sizing:border-box">  
+      </div>  
+      <div id="import-barang-preview" style="display:none;margin-bottom:14px">  
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Preview data (<span id="import-barang-count">0</span> baris):</div>  
+        <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">  
+          <table style="width:100%;font-size:11px;border-collapse:collapse" id="import-barang-table"></table>  
+        </div>  
+      </div>  
+      <div id="import-barang-error" style="display:none;background:#fff0f0;border:1px solid #fcc;border-radius:8px;padding:10px;font-size:12px;color:#c0392b;margin-bottom:12px"></div>  
+      <div style="display:flex;gap:10px;justify-content:flex-end">  
+        <button class="mbtn-cancel" onclick="closeModal('modal-import')" style="padding:9px 20px">Batal</button>  
+        <button class="mbtn-masuk" id="import-barang-btn" onclick="doImportBarang()" style="padding:9px 20px;opacity:0.4;pointer-events:none">📥 Import Sekarang</button>  
+      </div>  
+    </div>  
+  </div>  
+</div>
+
+<!-- \===== MODAL IMPORT TRANSAKSI \===== \-->  
+<div class="overlay" id="modal-import-trx">  
+  <div class="modal" style="max-width:560px;border-radius:16px">  
+    <div class="modal-top" style="background:linear-gradient(135deg,#0D7A3E,#05522a)">  
+      <div class="modal-title">📥 Import Data Transaksi</div>  
+      <button class="modal-close" onclick="closeModal('modal-import-trx')">✕</button>  
+    </div>  
+    <div style="padding:20px">  
+      <div style="background:#f0fff4;border:1px solid #b3e8c8;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#1a4a2a">  
+        <b>Format CSV yang diterima:</b><br>  
+        <code style="font-size:11px;color:#333">nama_barang,tipe,jumlah,tanggal,keterangan,pemohon</code><br><br>  
+        <b>Contoh isi:</b><br>  
+        <code style="font-size:11px;color:#333">Kertas A4,masuk,10,2025-01-15,Pengadaan bulanan,<br>Pulpen,keluar,5,2025-01-16,Pemakaian harian,Budi</code><br><br>  
+        <b>tipe:</b> masuk atau keluar &nbsp;|&nbsp; <b>tanggal:</b> format YYYY-MM-DD<br>  
+        <b>nama_barang harus cocok</b> dengan nama di database  
+      </div>  
+      <div style="margin-bottom:14px">  
+        <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Upload file CSV atau Excel (.csv / .xlsx)</label>  
+        <input type="file" id="import-trx-file" accept=".csv,.xlsx" onchange="handleImportTrxFile(this.files[0])" style="width:100%;padding:8px;border:1.5px dashed var(--border);border-radius:8px;font-size:13px;cursor:pointer;box-sizing:border-box">  
+      </div>  
+      <div id="import-trx-preview" style="display:none;margin-bottom:14px">  
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Preview data (<span id="import-trx-count">0</span> baris):</div>  
+        <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">  
+          <table style="width:100%;font-size:11px;border-collapse:collapse" id="import-trx-table"></table>  
+        </div>  
+      </div>  
+      <div id="import-trx-error" style="display:none;background:#fff0f0;border:1px solid #fcc;border-radius:8px;padding:10px;font-size:12px;color:#c0392b;margin-bottom:12px"></div>  
+      <div style="display:flex;gap:10px;justify-content:flex-end">  
+        <button class="mbtn-cancel" onclick="closeModal('modal-import-trx')" style="padding:9px 20px">Batal</button>  
+        <button class="mbtn-masuk" id="import-trx-btn" onclick="doImportTrx()" style="padding:9px 20px;opacity:0.4;pointer-events:none">📥 Import Sekarang</button>  
+      </div>  
+    </div>  
+  </div>  
+</div>
+
+<!-- \===== MODAL RESET DATA \===== \-->  
+<div class="overlay" id="modal-reset">  
+  <div class="modal" style="max-width:460px;border-radius:16px">  
+    <div class="modal-top" style="background:linear-gradient(135deg,#c0392b,#922b21)">  
+      <div class="modal-title">🗑️ Reset / Hapus Semua Data</div>  
+      <button class="modal-close" onclick="closeModal('modal-reset')">✕</button>  
+    </div>  
+    <div style="padding:20px">  
+      <div style="background:#fff0f0;border:1px solid #fcc;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#c0392b">  
+        ⚠️ <b>Peringatan!</b> Tindakan ini tidak bisa dibatalkan.<br>  
+        Data yang dihapus akan hilang permanen dari database.  
+      </div>  
+      <div style="margin-bottom:16px">  
+        <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:10px">Pilih data yang ingin dihapus:</label>  
+        <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:8px">  
+          <input type="checkbox" id="reset-transaksi" onchange="checkResetConfirm()" style="width:16px;height:16px;accent-color:#c0392b">  
+          <div><div style="font-size:13px;font-weight:600">Semua Transaksi</div><div style="font-size:11px;color:var(--muted)">Riwayat barang masuk &amp; keluar</div></div>  
+        </label>  
+        <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:8px">  
+          <input type="checkbox" id="reset-permintaan" onchange="checkResetConfirm()" style="width:16px;height:16px;accent-color:#c0392b">  
+          <div><div style="font-size:13px;font-weight:600">Semua Permintaan</div><div style="font-size:11px;color:var(--muted)">Data permintaan pengadaan barang</div></div>  
+        </label>  
+        <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:8px">  
+          <input type="checkbox" id="reset-barang" onchange="checkResetConfirm()" style="width:16px;height:16px;accent-color:#c0392b">  
+          <div><div style="font-size:13px;font-weight:600">Semua Barang</div><div style="font-size:11px;color:var(--muted)">Master data barang (otomatis hapus transaksi &amp; permintaan juga)</div></div>  
+        </label>  
+      </div>  
+      <div style="margin-bottom:16px">  
+        <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Ketik <b>HAPUS</b> untuk konfirmasi:</label>  
+        <input type="text" id="reset-confirm-input" placeholder="Ketik HAPUS di sini..." style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;box-sizing:border-box" oninput="checkResetConfirm()">  
+      </div>  
+      <div style="display:flex;gap:10px;justify-content:flex-end">  
+        <button class="mbtn-cancel" onclick="closeModal('modal-reset')" style="padding:9px 20px">Batal</button>  
+        <button id="reset-confirm-btn" onclick="doResetData()" style="padding:9px 20px;background:#c0392b;color:#fff;border:none;border-radius:9px;font-weight:700;cursor:pointer;opacity:0.4;pointer-events:none;font-size:13px">🗑️ Hapus Sekarang</button>  
+      </div>  
+    </div>  
+  </div>  
+</div>
+
+<div class="toast" id="toast"></div>  
+</div>  
+
+<!-- ===== MODAL EDIT TRANSAKSI ===== -->
+<div class="overlay" id="modal-edit-trx">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-top" id="et-modal-top" style="background:linear-gradient(135deg,#1565C0,#003F88)">
+      <button class="modal-close" onclick="closeModal('modal-edit-trx')">✕</button>
+      <div class="modal-ios-icon" id="et-modal-icon" style="background:linear-gradient(145deg,#1565C0,#003F88);font-size:22px;display:flex;align-items:center;justify-content:center">✏️</div>
+      <div class="modal-title" id="et-modal-title">Edit Transaksi</div>
+      <div class="modal-subtitle" id="et-modal-sub">—</div>
+    </div>
+    <div class="modal-content">
+      <input type="hidden" id="et-id">
+
+      <!-- Barang (read-only) -->
+      <div class="mf-group" style="margin-bottom:12px">
+        <label class="mf-label">Barang</label>
+        <input class="mf-input" id="et-barang" readonly style="background:var(--bg);color:var(--muted);cursor:default">
       </div>
-      <div class="mf-group"><label class="mf-label">Keterangan</label><input class="mf-input" type="text" id="mf-ket" placeholder="Sumber / tujuan pemakaian..."></div>
-      <div class="mf-group" id="mf-pemohon-group" style="display:none">
+
+      <!-- Tipe -->
+      <div class="mf-group" style="margin-bottom:12px">
+        <label class="mf-label">Tipe Transaksi</label>
+        <select class="mf-select" id="et-tipe" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:inherit">
+          <option value="masuk">📥 Barang Masuk</option>
+          <option value="keluar">📤 Barang Keluar</option>
+        </select>
+      </div>
+
+      <!-- Jumlah & Tanggal -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div class="mf-group">
+          <label class="mf-label">Jumlah</label>
+          <input class="mf-input" type="number" id="et-jumlah" min="1" placeholder="0">
+        </div>
+        <div class="mf-group">
+          <label class="mf-label">Tanggal</label>
+          <input class="mf-input" type="date" id="et-tanggal">
+        </div>
+      </div>
+
+      <!-- Keterangan -->
+      <div class="mf-group" style="margin-bottom:12px">
+        <label class="mf-label">Keterangan</label>
+        <input class="mf-input" type="text" id="et-ket" placeholder="Sumber / tujuan pemakaian...">
+      </div>
+
+      <!-- Pemohon -->
+      <div class="mf-group" id="et-pemohon-group" style="margin-bottom:16px;display:none">
         <label class="mf-label">Pemohon <span style="color:var(--muted);font-weight:400;font-size:9px">(wajib untuk barang keluar)</span></label>
-        <input class="mf-input" type="text" id="mf-pemohon" placeholder="Nama pemohon / bagian...">
-        <div class="pemohon-quick-btns" id="pemohon-qbtns">
-          <button type="button" class="pemohon-qbtn" onclick="setPemohon('Operasional')">Operasional</button>
-          <button type="button" class="pemohon-qbtn" onclick="setPemohon('Administrasi')">Administrasi</button>
-          <button type="button" class="pemohon-qbtn" onclick="setPemohon('Teknik')">Teknik</button>
-          <button type="button" class="pemohon-qbtn" onclick="setPemohon('Keuangan')">Keuangan</button>
-          <button type="button" class="pemohon-qbtn" onclick="setPemohon('Umum')">Umum</button>
+        <input class="mf-input" type="text" id="et-pemohon" placeholder="Nama pemohon / bagian...">
+        <div class="pemohon-quick-btns" style="margin-top:6px">
+          <button type="button" class="pemohon-qbtn" onclick="document.getElementById('et-pemohon').value='Operasional'">Operasional</button>
+          <button type="button" class="pemohon-qbtn" onclick="document.getElementById('et-pemohon').value='Administrasi'">Administrasi</button>
+          <button type="button" class="pemohon-qbtn" onclick="document.getElementById('et-pemohon').value='Teknik'">Teknik</button>
+          <button type="button" class="pemohon-qbtn" onclick="document.getElementById('et-pemohon').value='Keuangan'">Keuangan</button>
+          <button type="button" class="pemohon-qbtn" onclick="document.getElementById('et-pemohon').value='Umum'">Umum</button>
         </div>
       </div>
-      <div class="modal-btns">
-        <button class="mbtn-masuk" id="mbtn-masuk-btn" onmouseenter="showPemohonField(false)" onclick="doTrx('masuk')">📥 Catat Masuk</button>
-        <button class="mbtn-keluar" id="mbtn-keluar-btn" onmouseenter="showPemohonField(true)" onclick="doTrx('keluar')">📤 Catat Keluar</button>
+
+      <!-- Peringatan -->
+      <div style="background:#fffde7;border:1.5px solid #FFD54F;border-radius:9px;padding:10px 13px;margin-bottom:14px;font-size:11.5px;color:#795548">
+        ⚠️ <strong>Perhatian:</strong> Mengubah jumlah atau tipe transaksi akan otomatis menyesuaikan stok barang.
+      </div>
+
+      <!-- Tombol -->
+      <div style="display:flex;gap:10px">
+        <button class="mbtn-cancel" style="flex:1;padding:11px;font-size:12.5px;border-radius:9px" onclick="closeModal('modal-edit-trx')">Batal</button>
+        <button style="flex:2;padding:11px;font-size:12.5px;border-radius:9px;background:linear-gradient(135deg,#1565C0,#003F88);color:#fff;border:none;font-weight:700;cursor:pointer;font-family:inherit" onclick="simpanEditTrx()">💾 &nbsp;Simpan Perubahan</button>
       </div>
     </div>
   </div>
 </div>
 
-<div class="overlay" id="modal-add">
-  <div class="modal add-modal">
-    <div class="modal-top" style="background:linear-gradient(135deg,#0D7A3E,#064D26)">
-      <button class="modal-close" onclick="closeModal('modal-add')">✕</button>
-      <div class="modal-ios-icon" id="add-preview" style="background:linear-gradient(145deg,#43A047,#1B5E20)">📦</div>
-      <div class="modal-title">Tambah Barang Baru</div>
-      <div class="modal-subtitle">Isi data lengkap barang yang akan ditambahkan</div>
-    </div>
-    <div class="modal-content">
-      <div class="add-form-grid">
-        <div class="mf-group"><label class="mf-label">Nama Barang</label><input class="mf-input" id="a-nama" placeholder="Nama barang..."></div>
-        <div class="mf-group"><label class="mf-label">Lokasi</label><select class="mf-select" id="a-lokasi" onchange="updateAddPreview()"><option>Kantor</option><option>Halte</option></select></div>
-      </div>
-      <div class="add-form-grid triple">
-        <div class="mf-group"><label class="mf-label">Kategori</label><input class="mf-input" id="a-kat" placeholder="ATK, Elektronik..."></div>
-        <div class="mf-group"><label class="mf-label">Satuan</label><input class="mf-input" id="a-sat" placeholder="pcs, unit..."></div>
-        <div class="mf-group"><label class="mf-label">Stok Awal</label><input class="mf-input" type="number" id="a-stok" placeholder="0" min="0"></div>
-      </div>
-      <div class="add-form-grid">
-        <div class="mf-group"><label class="mf-label">Stok Minimum</label><input class="mf-input" type="number" id="a-min" value="5" min="0"></div>
-        <div class="mf-group"><label class="mf-label">Ikon Barang</label>
-          <div class="icon-picker-wrap" id="icon-picker-wrap">
-            <button type="button" class="icon-picker-trigger" id="icon-picker-trigger" onclick="toggleIconPicker()">
-              <span class="ipt-emoji" id="ipt-emoji-preview">📦</span>
-              <span class="ipt-name" id="ipt-name-preview">Kardus / Umum</span>
-              <span class="ipt-arrow">▾</span>
-            </button>
-            <input type="hidden" id="a-emoji" value="📦">
-            <div class="icon-picker-dropdown" id="icon-picker-dropdown">
-              <div class="ipd-search" style="position:relative">
-                <span class="ipd-search-icon">🔍</span>
-                <input class="ipd-search-input" id="ipd-search" placeholder="Cari ikon..." oninput="filterIcons(this.value)">
-              </div>
-              <div class="ipd-cats" id="ipd-cats"></div>
-              <div class="ipd-grid" id="ipd-grid"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="modal-photo-section">
-        <div class="mf-label" style="margin-bottom:6px">Foto Barang <span style="color:var(--muted);font-weight:400;font-size:9px">(opsional)</span></div>
-        <img id="add-photo-preview" class="modal-photo-preview" src="" alt="">
-        <div class="modal-photo-placeholder" id="add-photo-placeholder" onclick="document.getElementById('add-photo-input').click()">
-          <span style="font-size:22px">📷</span>
-          <span>Klik untuk upload foto</span>
-        </div>
-        <input type="file" id="add-photo-input" accept="image/*" style="display:none" onchange="handleAddPhoto(event)">
-        <div class="photo-action-row" id="add-photo-actions" style="display:none">
-          <button class="photo-btn upload" onclick="document.getElementById('add-photo-input').click()">📁 Ganti</button>
-          <button class="photo-btn delete" onclick="clearAddPhoto()">🗑 Hapus</button>
-        </div>
-      </div>
-      <button class="mbtn-masuk" style="width:100%;padding:12px;font-size:13px;border-radius:9px;background:linear-gradient(135deg,#0D7A3E,#064D26)" onclick="simpanBarang()">💾 &nbsp;Simpan Barang</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== MODAL EDIT BARANG ===== -->
-<div class="overlay" id="modal-edit">
-  <div class="modal add-modal">
-    <div class="modal-top" style="background:linear-gradient(135deg,#1565C0,#003F88)">
-      <button class="modal-close" onclick="closeModal('modal-edit')">✕</button>
-      <div class="modal-ios-icon" id="edit-preview" style="background:linear-gradient(145deg,#4A90E2,#1565C0)">📦</div>
-      <div class="modal-title">Edit Barang</div>
-      <div class="modal-subtitle">Ubah data barang yang sudah ada</div>
-    </div>
-    <div class="modal-content">
-      <input type="hidden" id="e-id">
-      <div class="add-form-grid">
-        <div class="mf-group"><label class="mf-label">Nama Barang</label><input class="mf-input" id="e-nama" placeholder="Nama barang..."></div>
-        <div class="mf-group"><label class="mf-label">Lokasi</label><select class="mf-select" id="e-lokasi" onchange="updateEditPreview()"><option>Kantor</option><option>Halte</option></select></div>
-      </div>
-      <div class="add-form-grid triple">
-        <div class="mf-group"><label class="mf-label">Kategori</label><input class="mf-input" id="e-kat" placeholder="ATK, Elektronik..."></div>
-        <div class="mf-group"><label class="mf-label">Satuan</label><input class="mf-input" id="e-sat" placeholder="pcs, unit..."></div>
-        <div class="mf-group"><label class="mf-label">Stok Saat Ini</label><input class="mf-input" type="number" id="e-stok" min="0"></div>
-      </div>
-      <div class="add-form-grid">
-        <div class="mf-group"><label class="mf-label">Stok Minimum</label><input class="mf-input" type="number" id="e-min" value="5" min="0"></div>
-        <div class="mf-group"><label class="mf-label">Ikon Barang</label>
-          <div class="icon-picker-wrap" id="icon-picker-wrap-edit">
-            <button type="button" class="icon-picker-trigger" id="icon-picker-trigger-edit" onclick="toggleIconPickerEdit()">
-              <span class="ipt-emoji" id="ipt-emoji-preview-edit">📦</span>
-              <span class="ipt-name" id="ipt-name-preview-edit">Kardus / Umum</span>
-              <span class="ipt-arrow">▾</span>
-            </button>
-            <input type="hidden" id="e-emoji" value="📦">
-            <div class="icon-picker-dropdown" id="icon-picker-dropdown-edit">
-              <div class="ipd-search" style="position:relative">
-                <span class="ipd-search-icon">🔍</span>
-                <input class="ipd-search-input" id="ipd-search-edit" placeholder="Cari ikon..." oninput="filterIconsEdit(this.value)">
-              </div>
-              <div class="ipd-cats" id="ipd-cats-edit"></div>
-              <div class="ipd-grid" id="ipd-grid-edit"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;margin-top:16px">
-        <button class="mbtn-cancel" style="flex:1;padding:12px;font-size:13px;border-radius:9px" onclick="closeModal('modal-edit')">Batal</button>
-        <button class="mbtn-masuk" style="flex:2;padding:12px;font-size:13px;border-radius:9px;background:linear-gradient(135deg,#1565C0,#003F88)" onclick="simpanEditBarang()">💾 Simpan Perubahan</button>
-      </div>
-      <button onclick="konfirmasiHapusBarang()" style="width:100%;margin-top:8px;padding:10px;background:none;border:1.5px solid #c0392b;color:#c0392b;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer">🗑️ Hapus Barang Ini</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== MODAL IMPORT BARANG ===== -->
-<div class="overlay" id="modal-import">
-  <div class="modal" style="max-width:520px;border-radius:16px">
-    <div class="modal-top" style="background:linear-gradient(135deg,#1565C0,#003F88)">
-      <div class="modal-title">📥 Import Data Barang</div>
-      <button class="modal-close" onclick="closeModal('modal-import')">✕</button>
-    </div>
-    <div style="padding:20px">
-      <div style="background:#f0f7ff;border:1px solid #b3d4f5;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#1a4a7a">
-        <b>Format CSV yang diterima:</b><br>
-        <code style="font-size:11px;color:#333">nama,lokasi,kat,sat,stok,min,emoji</code><br><br>
-        <b>Contoh isi:</b><br>
-        <code style="font-size:11px;color:#333">Kertas A4,Kantor,ATK,rim,25,5,📄<br>Sapu,Halte,Kebersihan,unit,4,2,🧹</code><br><br>
-        <b>Lokasi:</b> Kantor atau Halte &nbsp;|&nbsp; <b>Kolom emoji bisa dikosongkan</b> (default 📦)
-      </div>
-      <div style="margin-bottom:14px">
-        <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Upload file CSV atau Excel (.csv / .xlsx)</label>
-        <input type="file" id="import-barang-file" accept=".csv,.xlsx" onchange="handleImportBarangFile(this.files[0])" style="width:100%;padding:8px;border:1.5px dashed var(--border);border-radius:8px;font-size:13px;cursor:pointer;box-sizing:border-box">
-      </div>
-      <div id="import-barang-preview" style="display:none;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Preview data (<span id="import-barang-count">0</span> baris):</div>
-        <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
-          <table style="width:100%;font-size:11px;border-collapse:collapse" id="import-barang-table"></table>
-        </div>
-      </div>
-      <div id="import-barang-error" style="display:none;background:#fff0f0;border:1px solid #fcc;border-radius:8px;padding:10px;font-size:12px;color:#c0392b;margin-bottom:12px"></div>
-      <div style="display:flex;gap:10px;justify-content:flex-end">
-        <button class="mbtn-cancel" onclick="closeModal('modal-import')" style="padding:9px 20px">Batal</button>
-        <button class="mbtn-masuk" id="import-barang-btn" onclick="doImportBarang()" style="padding:9px 20px;opacity:0.4;pointer-events:none">📥 Import Sekarang</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== MODAL IMPORT TRANSAKSI ===== -->
-<div class="overlay" id="modal-import-trx">
-  <div class="modal" style="max-width:560px;border-radius:16px">
-    <div class="modal-top" style="background:linear-gradient(135deg,#0D7A3E,#05522a)">
-      <div class="modal-title">📥 Import Data Transaksi</div>
-      <button class="modal-close" onclick="closeModal('modal-import-trx')">✕</button>
-    </div>
-    <div style="padding:20px">
-      <div style="background:#f0fff4;border:1px solid #b3e8c8;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#1a4a2a">
-        <b>Format CSV yang diterima:</b><br>
-        <code style="font-size:11px;color:#333">nama_barang,tipe,jumlah,tanggal,keterangan,pemohon</code><br><br>
-        <b>Contoh isi:</b><br>
-        <code style="font-size:11px;color:#333">Kertas A4,masuk,10,2025-01-15,Pengadaan bulanan,<br>Pulpen,keluar,5,2025-01-16,Pemakaian harian,Budi</code><br><br>
-        <b>tipe:</b> masuk atau keluar &nbsp;|&nbsp; <b>tanggal:</b> format YYYY-MM-DD<br>
-        <b>nama_barang harus cocok</b> dengan nama di database
-      </div>
-      <div style="margin-bottom:14px">
-        <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Upload file CSV atau Excel (.csv / .xlsx)</label>
-        <input type="file" id="import-trx-file" accept=".csv,.xlsx" onchange="handleImportTrxFile(this.files[0])" style="width:100%;padding:8px;border:1.5px dashed var(--border);border-radius:8px;font-size:13px;cursor:pointer;box-sizing:border-box">
-      </div>
-      <div id="import-trx-preview" style="display:none;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Preview data (<span id="import-trx-count">0</span> baris):</div>
-        <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
-          <table style="width:100%;font-size:11px;border-collapse:collapse" id="import-trx-table"></table>
-        </div>
-      </div>
-      <div id="import-trx-error" style="display:none;background:#fff0f0;border:1px solid #fcc;border-radius:8px;padding:10px;font-size:12px;color:#c0392b;margin-bottom:12px"></div>
-      <div style="display:flex;gap:10px;justify-content:flex-end">
-        <button class="mbtn-cancel" onclick="closeModal('modal-import-trx')" style="padding:9px 20px">Batal</button>
-        <button class="mbtn-masuk" id="import-trx-btn" onclick="doImportTrx()" style="padding:9px 20px;opacity:0.4;pointer-events:none">📥 Import Sekarang</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== MODAL RESET DATA ===== -->
-<div class="overlay" id="modal-reset">
-  <div class="modal" style="max-width:460px;border-radius:16px">
-    <div class="modal-top" style="background:linear-gradient(135deg,#c0392b,#922b21)">
-      <div class="modal-title">🗑️ Reset / Hapus Semua Data</div>
-      <button class="modal-close" onclick="closeModal('modal-reset')">✕</button>
-    </div>
-    <div style="padding:20px">
-      <div style="background:#fff0f0;border:1px solid #fcc;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#c0392b">
-        ⚠️ <b>Peringatan!</b> Tindakan ini tidak bisa dibatalkan.<br>
-        Data yang dihapus akan hilang permanen dari database.
-      </div>
-      <div style="margin-bottom:16px">
-        <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:10px">Pilih data yang ingin dihapus:</label>
-        <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:8px">
-          <input type="checkbox" id="reset-transaksi" onchange="checkResetConfirm()" style="width:16px;height:16px;accent-color:#c0392b">
-          <div><div style="font-size:13px;font-weight:600">Semua Transaksi</div><div style="font-size:11px;color:var(--muted)">Riwayat barang masuk &amp; keluar</div></div>
-        </label>
-        <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:8px">
-          <input type="checkbox" id="reset-permintaan" onchange="checkResetConfirm()" style="width:16px;height:16px;accent-color:#c0392b">
-          <div><div style="font-size:13px;font-weight:600">Semua Permintaan</div><div style="font-size:11px;color:var(--muted)">Data permintaan pengadaan barang</div></div>
-        </label>
-        <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:8px">
-          <input type="checkbox" id="reset-barang" onchange="checkResetConfirm()" style="width:16px;height:16px;accent-color:#c0392b">
-          <div><div style="font-size:13px;font-weight:600">Semua Barang</div><div style="font-size:11px;color:var(--muted)">Master data barang (otomatis hapus transaksi &amp; permintaan juga)</div></div>
-        </label>
-      </div>
-      <div style="margin-bottom:16px">
-        <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Ketik <b>HAPUS</b> untuk konfirmasi:</label>
-        <input type="text" id="reset-confirm-input" placeholder="Ketik HAPUS di sini..." style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;box-sizing:border-box" oninput="checkResetConfirm()">
-      </div>
-      <div style="display:flex;gap:10px;justify-content:flex-end">
-        <button class="mbtn-cancel" onclick="closeModal('modal-reset')" style="padding:9px 20px">Batal</button>
-        <button id="reset-confirm-btn" onclick="doResetData()" style="padding:9px 20px;background:#c0392b;color:#fff;border:none;border-radius:9px;font-weight:700;cursor:pointer;opacity:0.4;pointer-events:none;font-size:13px">🗑️ Hapus Sekarang</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-</div>
-<script src="script.js"></script>
-</body>
+<script src="script.js"></script>  
+</body>  
 </html>
