@@ -1450,7 +1450,531 @@ async function doResetData() {
 
 // =========== CLEAR ALL DATA (legacy) ===========
 function clearAllData(){ openResetModal(); }
+// =========================================================
+// STOCK OPNAME MODULE
+// =========================================================
 
+// State SO
+var soAktif      = null;   // { id, periode, lokasi_filter, catatan, by, tgl_mulai }
+var soItems      = [];     // [{ barang_id, stok_sistem, stok_fisik, selisih, ket, filled }]
+var soHistori    = [];     // riwayat SO selesai dari Supabase
+var soHistShown  = false;
+
+// ---- SUPABASE: Load SO dari DB ----
+async function loadSoData() {
+  try {
+    const { data, error } = await sb.from('stock_opname')
+      .select('*')
+      .order('tgl_mulai', { ascending: false });
+    if (error) throw error;
+    const all = data || [];
+    // SO aktif: status 'aktif'
+    const aktif = all.find(s => s.status === 'aktif');
+    if (aktif) {
+      soAktif = aktif;
+      // Load items SO aktif
+      const { data: d2, error: e2 } = await sb.from('stock_opname_item')
+        .select('*').eq('so_id', aktif.id);
+      if (e2) throw e2;
+      soItems = (d2 || []).map(r => ({
+        id: r.id, barang_id: r.barang_id,
+        stok_sistem: r.stok_sistem, stok_fisik: r.stok_fisik,
+        selisih: r.selisih, ket: r.keterangan || '',
+        filled: r.stok_fisik !== null
+      }));
+    } else {
+      soAktif = null; soItems = [];
+    }
+    soHistori = all.filter(s => s.status !== 'aktif');
+  } catch(e) {
+    console.warn('loadSoData error:', e);
+  }
+}
+
+// ---- Tambah gotoPage support SO ----
+// (patch fungsi gotoPage yang ada)
+// Temukan fungsi gotoPage di script.js dan TAMBAHKAN case 'so':
+// case 'so': renderPageSo(); break;
+// Jika gotoPage menggunakan if-else, tambahkan:
+// if(p==='so') { ... renderPageSo(); }
+
+// ---- Render halaman SO ----
+async function renderPageSo() {
+  // Load SO terkini dari DB jika belum
+  showLoading('⏳ Memuat data SO...');
+  await loadSoData();
+  hideLoading();
+
+  var wrap = document.getElementById('so-active-wrap');
+  var banner = document.getElementById('so-banner');
+
+  if (soAktif) {
+    // Ada SO aktif
+    banner.className = 'so-banner aktif';
+    document.getElementById('so-banner-title').textContent =
+      '📋 SO Aktif — ' + formatPeriode(soAktif.periode);
+    document.getElementById('so-banner-sub').textContent =
+      'Dimulai oleh ' + soAktif.petugas + ' · ' + formatTgl(soAktif.tgl_mulai);
+    document.getElementById('so-start-btn').style.display = 'none';
+    wrap.style.display = 'block';
+    // isi meta
+    document.getElementById('so-active-period').textContent = formatPeriode(soAktif.periode);
+    document.getElementById('so-active-by').textContent = soAktif.petugas;
+    renderSoGrid();
+  } else {
+    // Tidak ada SO aktif
+    banner.className = 'so-banner';
+    document.getElementById('so-banner-title').textContent = 'Belum ada SO aktif bulan ini';
+    document.getElementById('so-banner-sub').textContent =
+      'Mulai Stock Opname untuk mencocokkan stok fisik dengan sistem';
+    document.getElementById('so-start-btn').style.display = 'flex';
+    wrap.style.display = 'none';
+  }
+}
+
+function formatPeriode(str) {
+  if (!str) return '—';
+  // str = "2026-05"
+  var parts = str.split('-');
+  var bulan = ['Januari','Februari','Maret','April','Mei','Juni',
+               'Juli','Agustus','September','Oktober','November','Desember'];
+  return bulan[parseInt(parts[1])-1] + ' ' + parts[0];
+}
+
+function formatTgl(str) {
+  if (!str) return '—';
+  var d = new Date(str);
+  return d.toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' });
+}
+
+function getPeriodeBulanIni() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+
+// ---- Open Modal Mulai SO ----
+function openSoStartModal() {
+  var periode = getPeriodeBulanIni();
+  document.getElementById('so-start-period').textContent = formatPeriode(periode);
+  var lokFilter = document.getElementById('so-start-lokasi').value || '';
+  var itemCount = lokFilter ? barang.filter(b => b.lokasi === lokFilter).length : barang.length;
+  document.getElementById('so-start-count').textContent = itemCount + ' item barang';
+  document.getElementById('so-start-user').textContent = currentUser ? currentUser.nama : '—';
+  document.getElementById('modal-so-start').classList.add('open');
+}
+
+// Update count saat filter lokasi berubah
+document.addEventListener('change', function(e) {
+  if (e.target && e.target.id === 'so-start-lokasi') {
+    var v = e.target.value;
+    var cnt = v ? barang.filter(b => b.lokasi === v).length : barang.length;
+    document.getElementById('so-start-count').textContent = cnt + ' item barang';
+  }
+});
+
+// ---- Mulai SO ----
+async function doStartSo() {
+  var periode    = getPeriodeBulanIni();
+  var lokFilter  = document.getElementById('so-start-lokasi').value || '';
+  var catatan    = document.getElementById('so-start-catatan').value.trim();
+  var petugas    = currentUser ? currentUser.nama : 'Admin';
+
+  // Buat daftar item
+  var targetBarang = lokFilter ? barang.filter(b => b.lokasi === lokFilter) : barang;
+  if (!targetBarang.length) { toast('❌ Tidak ada barang untuk di-SO','err'); return; }
+
+  try {
+    showLoading('⏳ Membuat SO...');
+    // Insert header SO
+    var { data: soRow, error: e1 } = await sb.from('stock_opname').insert({
+      periode, lokasi_filter: lokFilter || 'Semua',
+      catatan, petugas, tgl_mulai: todayStr(), status: 'aktif'
+    }).select().single();
+    if (e1) throw e1;
+
+    // Insert items SO
+    var itemRows = targetBarang.map(b => ({
+      so_id: soRow.id, barang_id: b.id,
+      stok_sistem: b.stok, stok_fisik: null, selisih: null, keterangan: ''
+    }));
+    var { error: e2 } = await sb.from('stock_opname_item').insert(itemRows);
+    if (e2) throw e2;
+
+    closeModal('modal-so-start');
+    toast('✅ Stock Opname ' + formatPeriode(periode) + ' berhasil dimulai!', 'ok');
+    await renderPageSo();
+    hideLoading();
+  } catch(e) {
+    hideLoading();
+    toast('❌ Gagal memulai SO: ' + e.message, 'err');
+  }
+}
+
+// ---- Render Tabel SO ----
+function renderSoGrid() {
+  if (!soAktif) return;
+
+  var search  = (document.getElementById('so-search')  || {}).value || '';
+  var fLokasi = (document.getElementById('so-f-lokasi') || {}).value || '';
+  var fStatus = (document.getElementById('so-f-status') || {}).value || '';
+
+  // Gabungkan soItems dengan data barang
+  var rows = soItems.map(si => {
+    var b = getB(si.barang_id);
+    if (!b) return null;
+    var status = !si.filled ? 'pending'
+               : si.selisih === 0 ? 'ok' : 'selisih';
+    return { ...si, barang: b, status };
+  }).filter(Boolean);
+
+  // Filter
+  if (fLokasi)  rows = rows.filter(r => r.barang.lokasi === fLokasi);
+  if (fStatus)  rows = rows.filter(r => r.status === fStatus);
+  if (search)   rows = rows.filter(r =>
+    r.barang.nama.toLowerCase().includes(search.toLowerCase()) ||
+    r.barang.kat.toLowerCase().includes(search.toLowerCase()));
+
+  // Update stats
+  var all  = soItems.map(si => {
+    var b = getB(si.barang_id); if(!b) return null;
+    return { ...si, status: !si.filled ? 'pending' : si.selisih === 0 ? 'ok' : 'selisih' };
+  }).filter(Boolean);
+
+  var nOk      = all.filter(r => r.status === 'ok').length;
+  var nSelisih = all.filter(r => r.status === 'selisih').length;
+  var nPending = all.filter(r => r.status === 'pending').length;
+  var nTotal   = all.length;
+  var nFilled  = nOk + nSelisih;
+
+  document.getElementById('sos-total').textContent   = nTotal;
+  document.getElementById('sos-ok').textContent      = nOk;
+  document.getElementById('sos-selisih').textContent = nSelisih;
+  document.getElementById('sos-pending').textContent = nPending;
+  document.getElementById('so-progress-text').textContent = nFilled + ' / ' + nTotal;
+  var pct = nTotal ? Math.round(nFilled / nTotal * 100) : 0;
+  document.getElementById('so-progress-fill').style.width = pct + '%';
+
+  // Render tabel
+  var tbody = document.getElementById('so-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--muted)">Tidak ada data</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map((r, i) => {
+    var st = r.status;
+    var stLabel = st === 'ok' ? '<span class="tbadge ok-badge">✅ Cocok</span>'
+                : st === 'selisih' ? '<span class="tbadge warn-badge">⚠️ Selisih</span>'
+                : '<span class="tbadge pend-badge">⏳ Belum</span>';
+    var fisikVal = r.filled ? r.stok_fisik : '—';
+    var selisihVal = r.filled
+      ? '<span style="font-weight:700;color:' +
+        (r.selisih > 0 ? 'var(--green)' : r.selisih < 0 ? 'var(--red)' : 'var(--muted)') + '">'
+        + (r.selisih > 0 ? '+' : '') + r.selisih + '</span>'
+      : '—';
+    var rowCls = st === 'selisih' ? 'so-row-selisih' : st === 'pending' ? 'so-row-pending' : '';
+    return '<tr class="' + rowCls + '" onclick="openSoInputModal(' + r.barang_id + ')" style="cursor:pointer">'
+      + '<td style="text-align:center;color:var(--muted);font-size:11px">' + (i+1) + '</td>'
+      + '<td><div style="display:flex;align-items:center;gap:8px">'
+      +   '<span style="font-size:18px">' + r.barang.emoji + '</span>'
+      +   '<div><div style="font-weight:600;font-size:12.5px">' + r.barang.nama + '</div>'
+      +   '<div style="font-size:10px;color:var(--muted)">' + r.barang.sat + '</div></div>'
+      + '</div></td>'
+      + '<td><span class="tbadge ' + r.barang.lokasi.toLowerCase() + '-badge">' + r.barang.lokasi + '</span></td>'
+      + '<td style="font-size:11.5px;color:var(--text2)">' + r.barang.kat + '</td>'
+      + '<td style="text-align:center;font-weight:700">' + r.stok_sistem + '</td>'
+      + '<td style="text-align:center;font-weight:700">' + fisikVal + '</td>'
+      + '<td style="text-align:center">' + selisihVal + '</td>'
+      + '<td style="font-size:11px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.ket || '—') + '</td>'
+      + '<td style="text-align:center">' + stLabel + '</td>'
+      + '</tr>';
+  }).join('');
+}
+
+// ---- Open Modal Input Stok Fisik ----
+function openSoInputModal(barangId) {
+  if (!soAktif) return;
+  var b = getB(barangId);
+  if (!b) return;
+  var si = soItems.find(s => s.barang_id === barangId);
+  if (!si) return;
+
+  document.getElementById('so-input-barang-id').value = barangId;
+  document.getElementById('so-input-icon').textContent  = b.emoji;
+  document.getElementById('so-input-title').textContent = b.nama;
+  document.getElementById('so-input-sub').textContent   = b.kat + ' — ' + b.lokasi;
+  document.getElementById('so-input-sistem-val').textContent = si.stok_sistem + ' ' + b.sat;
+  document.getElementById('so-input-fisik').value = si.filled ? si.stok_fisik : '';
+  document.getElementById('so-input-ket').value   = si.ket || '';
+
+  updateSoSelisihPreview();
+  document.getElementById('modal-so-input').classList.add('open');
+  setTimeout(() => document.getElementById('so-input-fisik').focus(), 200);
+}
+
+function updateSoSelisihPreview() {
+  var bid    = parseInt(document.getElementById('so-input-barang-id').value);
+  var si     = soItems.find(s => s.barang_id === bid);
+  var fisik  = parseInt(document.getElementById('so-input-fisik').value);
+  var prev   = document.getElementById('so-selisih-preview');
+  if (!si || isNaN(fisik)) { prev.style.display = 'none'; return; }
+  var selisih = fisik - si.stok_sistem;
+  prev.style.display = 'flex';
+  document.getElementById('so-selisih-icon').textContent =
+    selisih > 0 ? '📈' : selisih < 0 ? '📉' : '✅';
+  document.getElementById('so-selisih-val').textContent =
+    (selisih > 0 ? '+' : '') + selisih +
+    (selisih === 0 ? ' (Stok cocok!)' : selisih > 0 ? ' (Stok fisik lebih)' : ' (Stok fisik kurang)');
+  prev.className = 'so-selisih-preview ' +
+    (selisih === 0 ? 'ok' : 'warn');
+}
+
+// ---- Simpan item SO ----
+async function saveSoItem() {
+  var bid   = parseInt(document.getElementById('so-input-barang-id').value);
+  var fisik = parseInt(document.getElementById('so-input-fisik').value);
+  var ket   = document.getElementById('so-input-ket').value.trim();
+  var si    = soItems.find(s => s.barang_id === bid);
+
+  if (!si)               { toast('⚠️ Data SO tidak ditemukan','err'); return; }
+  if (isNaN(fisik) || fisik < 0) { toast('⚠️ Stok fisik tidak valid','err'); return; }
+
+  var selisih = fisik - si.stok_sistem;
+
+  try {
+    showLoading('⏳ Menyimpan...');
+    var { error } = await sb.from('stock_opname_item')
+      .update({ stok_fisik: fisik, selisih, keterangan: ket })
+      .eq('id', si.id);
+    if (error) throw error;
+
+    // Update state
+    si.stok_fisik = fisik;
+    si.selisih    = selisih;
+    si.ket        = ket;
+    si.filled     = true;
+
+    closeModal('modal-so-input');
+    hideLoading();
+    showSaveIndicator();
+    renderSoGrid();
+    toast(selisih === 0 ? '✅ Stok cocok!' : '⚠️ Selisih ' + (selisih > 0 ? '+' : '') + selisih + ' dicatat', 'ok');
+  } catch(e) {
+    hideLoading();
+    toast('❌ Gagal simpan: ' + e.message, 'err');
+  }
+}
+
+// ---- Konfirmasi Selesaikan SO ----
+function konfirmasiFinishSo() {
+  var all      = soItems.map(si => ({ ...si, status: !si.filled ? 'pending' : si.selisih === 0 ? 'ok' : 'selisih' }));
+  var nTotal   = all.length;
+  var nFilled  = all.filter(r => r.filled).length;
+  var nOk      = all.filter(r => r.status === 'ok').length;
+  var nSelisih = all.filter(r => r.status === 'selisih').length;
+  var nPending = all.filter(r => r.status === 'pending').length;
+
+  document.getElementById('so-finish-summary').innerHTML =
+    '<div class="so-finish-grid">'
+    + '<div class="so-finish-item total"><div class="so-fi-num">' + nTotal + '</div><div class="so-fi-lbl">Total Item</div></div>'
+    + '<div class="so-finish-item ok"><div class="so-fi-num">' + nOk + '</div><div class="so-fi-lbl">Stok Cocok</div></div>'
+    + '<div class="so-finish-item warn"><div class="so-fi-num">' + nSelisih + '</div><div class="so-fi-lbl">Ada Selisih</div></div>'
+    + '<div class="so-finish-item pending"><div class="so-fi-num">' + nPending + '</div><div class="so-fi-lbl">Belum Diisi</div></div>'
+    + '</div>'
+    + (nPending > 0 ? '<div style="color:var(--amber);font-size:12px;margin-top:10px;font-weight:600">⚠️ Masih ada ' + nPending + ' item yang belum diisi stok fisiknya.</div>' : '');
+
+  document.getElementById('modal-so-finish').classList.add('open');
+}
+
+// ---- Selesaikan SO ----
+async function doFinishSo() {
+  if (!soAktif) return;
+  var koreksi = document.getElementById('so-finish-koreksi').checked;
+
+  try {
+    showLoading('⏳ Menyelesaikan SO...');
+    // Update status SO
+    var { error: e1 } = await sb.from('stock_opname')
+      .update({ status: 'selesai', tgl_selesai: todayStr() })
+      .eq('id', soAktif.id);
+    if (e1) throw e1;
+
+    // Koreksi stok jika dicentang
+    if (koreksi) {
+      var itemsSelisih = soItems.filter(si => si.filled && si.selisih !== 0);
+      for (var si of itemsSelisih) {
+        var b = getB(si.barang_id);
+        if (!b) continue;
+        // Update stok di DB
+        var { error: e2 } = await sb.from('barang')
+          .update({ stok: si.stok_fisik }).eq('id', b.id);
+        if (e2) console.warn('Gagal update stok', b.nama, e2);
+        // Catat transaksi koreksi
+        var diff = si.selisih;
+        var tipeTrx = diff > 0 ? 'masuk' : 'keluar';
+        await sb.from('transaksi').insert({
+          barang_id: b.id, tipe: tipeTrx, jumlah: Math.abs(diff),
+          tanggal: todayStr(), keterangan: 'Koreksi Stock Opname ' + formatPeriode(soAktif.periode),
+          lokasi: b.lokasi, pemohon: 'SO-' + soAktif.petugas
+        });
+        // Update state
+        b.stok = si.stok_fisik;
+      }
+    }
+
+    closeModal('modal-so-finish');
+    soAktif = null; soItems = [];
+    toast('✅ Stock Opname selesai!' + (koreksi ? ' Stok sistem telah dikoreksi.' : ''), 'ok');
+    await loadAllData();
+    renderGrid(); buildCatbar(); updateStats();
+    await renderPageSo();
+    hideLoading();
+  } catch(e) {
+    hideLoading();
+    toast('❌ Gagal: ' + e.message, 'err');
+  }
+}
+
+// ---- Batalkan SO ----
+async function konfirmasiBatalSo() {
+  if (!confirm('Yakin batalkan Stock Opname ini? Semua data pengisian akan hilang.')) return;
+  try {
+    showLoading('⏳ Membatalkan SO...');
+    await sb.from('stock_opname_item').delete().eq('so_id', soAktif.id);
+    await sb.from('stock_opname').delete().eq('id', soAktif.id);
+    soAktif = null; soItems = [];
+    toast('🗑️ Stock Opname dibatalkan', '');
+    await renderPageSo();
+    hideLoading();
+  } catch(e) {
+    hideLoading();
+    toast('❌ Gagal batalkan: ' + e.message, 'err');
+  }
+}
+
+// ---- Toggle Riwayat SO ----
+async function toggleSoHistory() {
+  soHistShown = !soHistShown;
+  var wrap = document.getElementById('so-history-wrap');
+  wrap.style.display = soHistShown ? 'block' : 'none';
+  if (soHistShown) renderSoHistory();
+}
+
+function renderSoHistory() {
+  var el = document.getElementById('so-history-list');
+  if (!soHistori.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem">Belum ada riwayat SO yang selesai.</div>';
+    return;
+  }
+  el.innerHTML = soHistori.map(s => {
+    var badgeCls = s.status === 'selesai' ? 'ok-badge' : 'warn-badge';
+    var badgeTxt = s.status === 'selesai' ? '✅ Selesai' : '🗑️ Dibatalkan';
+    return '<div class="so-hist-item">'
+      + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+      +   '<div class="so-hist-period">' + formatPeriode(s.periode) + '</div>'
+      +   '<span class="tbadge ' + badgeCls + '">' + badgeTxt + '</span>'
+      + '</div>'
+      + '<div class="so-hist-meta">'
+      +   '📅 Mulai: ' + formatTgl(s.tgl_mulai)
+      +   (s.tgl_selesai ? ' · Selesai: ' + formatTgl(s.tgl_selesai) : '')
+      +   ' · Petugas: <b>' + s.petugas + '</b>'
+      +   (s.lokasi_filter && s.lokasi_filter !== 'Semua' ? ' · Lokasi: ' + s.lokasi_filter : '')
+      + '</div>'
+      + (s.catatan ? '<div class="so-hist-catatan">' + s.catatan + '</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+// ---- Export SO Excel ----
+function exportSoExcel() {
+  if (!soAktif) return;
+  var rows = soItems.map(si => {
+    var b = getB(si.barang_id);
+    if (!b) return null;
+    return {
+      'Nama Barang': b.nama, 'Lokasi': b.lokasi, 'Kategori': b.kat, 'Satuan': b.sat,
+      'Stok Sistem': si.stok_sistem,
+      'Stok Fisik': si.filled ? si.stok_fisik : '',
+      'Selisih': si.filled ? si.selisih : '',
+      'Keterangan': si.ket || '',
+      'Status': !si.filled ? 'Belum Diisi' : si.selisih === 0 ? 'Cocok' : 'Ada Selisih'
+    };
+  }).filter(Boolean);
+
+  var ws = XLSX.utils.json_to_sheet(rows);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Stock Opname');
+  XLSX.writeFile(wb, 'SO_' + soAktif.periode + '_' + soAktif.petugas + '.xlsx');
+  toast('📊 Excel berhasil diexport', 'ok');
+}
+
+// ---- Export SO PDF ----
+async function exportSoPdf() {
+  if (!soAktif) return;
+  const { jsPDF } = window.jspdf;
+  var doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  var now = new Date().toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' });
+
+  doc.setFillColor(0, 63, 136);
+  doc.rect(0, 0, 297, 22, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(13); doc.setFont(undefined, 'bold');
+  doc.text('BERITA ACARA STOCK OPNAME', 148.5, 10, { align: 'center' });
+  doc.setFontSize(9); doc.setFont(undefined, 'normal');
+  doc.text('ATK Pool Purosani — TransJogja Yogyakarta', 148.5, 16, { align: 'center' });
+
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(10);
+  doc.text('Periode  : ' + formatPeriode(soAktif.periode), 14, 30);
+  doc.text('Petugas  : ' + soAktif.petugas, 14, 36);
+  doc.text('Tgl Mulai: ' + formatTgl(soAktif.tgl_mulai), 14, 42);
+  doc.text('Dicetak  : ' + now, 150, 30);
+
+  var tableRows = soItems.map((si, i) => {
+    var b = getB(si.barang_id); if (!b) return null;
+    return [
+      i+1, b.nama, b.lokasi, b.kat, b.sat,
+      si.stok_sistem,
+      si.filled ? si.stok_fisik : '—',
+      si.filled ? (si.selisih > 0 ? '+' + si.selisih : si.selisih) : '—',
+      si.ket || '—',
+      !si.filled ? 'Belum' : si.selisih === 0 ? 'Cocok' : 'Selisih'
+    ];
+  }).filter(Boolean);
+
+  doc.autoTable({
+    startY: 48,
+    head: [['#','Nama Barang','Lokasi','Kategori','Satuan','Sistem','Fisik','Selisih','Keterangan','Status']],
+    body: tableRows,
+    styles: { fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: [0, 63, 136], textColor: 255, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [242, 245, 250] },
+    didParseCell: function(data) {
+      if (data.section === 'body' && data.column.index === 9) {
+        var v = data.cell.raw;
+        if (v === 'Selisih') data.cell.styles.textColor = [192, 57, 43];
+        if (v === 'Cocok')   data.cell.styles.textColor = [13, 122, 62];
+        if (v === 'Belum')   data.cell.styles.textColor = [150, 100, 0];
+      }
+    }
+  });
+
+  // Tanda tangan
+  var finalY = doc.lastAutoTable.finalY + 12;
+  doc.setFontSize(9);
+  doc.text('Mengetahui,', 30, finalY);
+  doc.text('Petugas SO,', 148.5, finalY, { align: 'center' });
+  doc.text('Yogyakarta, ' + now, 260, finalY, { align: 'right' });
+  doc.line(14, finalY+20, 80, finalY+20);
+  doc.line(110, finalY+20, 186, finalY+20);
+  doc.text('( _________________ )', 47, finalY+24, { align: 'center' });
+  doc.text('( ' + soAktif.petugas + ' )', 148.5, finalY+24, { align: 'center' });
+
+  doc.save('SO_' + soAktif.periode + '_' + soAktif.petugas + '.pdf');
+  toast('📄 PDF berhasil diexport', 'ok');
+}
+
+// ========= END STOCK OPNAME MODULE =========
 // =========== INIT ===========
 (async function init(){
   setDateDisplay();
